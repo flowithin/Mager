@@ -18,7 +18,7 @@
 #include <string>
 #include <system_error>
 #include <unordered_set>
-#define LOG
+/*#define LOG*/
 
 struct PMB{bool ref, dirty;};
 struct Clock{
@@ -195,7 +195,7 @@ int vm_create(pid_t parent_pid, pid_t child_pid){
   page_table_entry_t* child_pt = new page_table_entry_t[VM_ARENA_SIZE]; 
   if(it != all_pt.end())
   {
-    std::cout << "here\n";
+    /*std::cout << "here\n";*/
     //parent_pid exists
     page_table_entry_t* parent_pt = it->second.st;
     assert(!free_block.empty());
@@ -432,7 +432,7 @@ std::string vm_to_string(const char *filename){
 void* vm_map(const char *filename, unsigned int block){
   if(filename == nullptr && free_block.empty()){
     //swap file backed
-      std::cerr << "free_block is empty\n";
+      /*std::cerr << "free_block is empty\n";*/
       return nullptr;
   }
   uint32_t size = ++all_pt[curr_pid].size;
