@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cctype>
+#include <cstdio>
 #include <ctime>
 #include <iomanip>
 #include <unordered_map>
@@ -420,34 +421,26 @@ int vm_fault(const void *addr, bool write_flag){
 }
 
 
+uint32_t a2p(const char* addr){
+  return (reinterpret_cast<uintptr_t>(addr) - reinterpret_cast<uintptr_t>(VM_ARENA_BASEADDR)) >> 16;
+}
+char mem(const char* addr){
+  return static_cast<char *>(vm_physmem)[page_table_base_register[a2p(addr)].ppage * VM_PAGESIZE + (reinterpret_cast<uintptr_t>(addr) & 0xFFFF)];
+}
 std::string vm_to_string(const char *filename){
-  uint32_t vpage = (reinterpret_cast<uintptr_t>(filename) - reinterpret_cast<uintptr_t>(VM_ARENA_BASEADDR)) >> 16;
-  /*if(page_table_base_register[vpage].read_enable == 0) vm_fault(filename, 0);*/
-  uint32_t offset = reinterpret_cast<uintptr_t>(filename)& 0xFFFF;
-  /*std::cout << "vpage = " << vpage << '\n';*/
+  uint32_t vpage = a2p(filename);
+  /*uint32_t offset = reinterpret_cast<uintptr_t>(filename)& 0xFFFF;*/
+  uint32_t i=0;
   std::string rs;
   while(1){
     //trigger fault if not in  arena
-    /*std::cout << "here\n";*/
     if(page_table_base_register[vpage].read_enable == 0 && vm_fault(VM_ARENA_BASEADDR + vpage * VM_PAGESIZE, 0) == -1)
-    {
-      myPrint("fault", "");
       return "@FAULT";
-
-    }
-    /*std::cout << "here\n";*/
-    if (static_cast<char *>(vm_physmem)[page_table_base_register[vpage].ppage * VM_PAGESIZE + offset] == '\0')
+    if (mem(filename + i) == '\0')
       break;
     //the string we want to read
-    rs += static_cast<char *>(vm_physmem)[page_table_base_register[vpage].ppage * VM_PAGESIZE + offset];
-    myPrint("rs: ", rs);
-    if (offset == 0xFFFF) {
-      vpage++;
-      assert(vpage < bound);
-      offset = 0;
-      continue;
-    }
-    offset++;
+    rs += mem(filename + i++);
+    vpage = a2p(filename);
   }
   myPrint("vm_to_string", "");
 
