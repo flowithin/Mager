@@ -1,33 +1,33 @@
 Pager started with 4 physical memory pages
-vm_create	(107069, 244384)
+vm_create	(107069, 265321)
 vm_create returned 0
-vm_switch	(244384)
-					returning to (244384) with r|w pages:
+vm_switch	(265321)
+					returning to (265321) with r|w pages:
 vm_map		(0x0, 0)
 vm_map returned 0x600000000
-					returning to (244384) with r|w pages:
+					returning to (265321) with r|w pages:
 					r	vpage 0x60000	ppage 0x0
 vm_map		(0x0, 0)
 vm_map returned 0x600010000
-					returning to (244384) with r|w pages:
+					returning to (265321) with r|w pages:
 					r	vpage 0x60000	ppage 0x0
 					r	vpage 0x60001	ppage 0x0
 vm_map		(0x0, 0)
 vm_map returned 0x600020000
-					returning to (244384) with r|w pages:
+					returning to (265321) with r|w pages:
 					r	vpage 0x60000	ppage 0x0
 					r	vpage 0x60001	ppage 0x0
 					r	vpage 0x60002	ppage 0x0
 vm_map		(0x0, 0)
 vm_map returned 0x600030000
-					returning to (244384) with r|w pages:
+					returning to (265321) with r|w pages:
 					r	vpage 0x60000	ppage 0x0
 					r	vpage 0x60001	ppage 0x0
 					r	vpage 0x60002	ppage 0x0
 					r	vpage 0x60003	ppage 0x0
 vm_map		(0x0, 0)
 vm_map returned 0x600040000
-					returning to (244384) with r|w pages:
+					returning to (265321) with r|w pages:
 					r	vpage 0x60000	ppage 0x0
 					r	vpage 0x60001	ppage 0x0
 					r	vpage 0x60002	ppage 0x0
@@ -35,7 +35,7 @@ vm_map returned 0x600040000
 					r	vpage 0x60004	ppage 0x0
 vm_map		(0x0, 0)
 vm_map returned 0x600050000
-					returning to (244384) with r|w pages:
+					returning to (265321) with r|w pages:
 					r	vpage 0x60000	ppage 0x0
 					r	vpage 0x60001	ppage 0x0
 					r	vpage 0x60002	ppage 0x0
@@ -44,7 +44,7 @@ vm_map returned 0x600050000
 					r	vpage 0x60005	ppage 0x0
 vm_map		(0x0, 0)
 vm_map returned 0x600060000
-					returning to (244384) with r|w pages:
+					returning to (265321) with r|w pages:
 					r	vpage 0x60000	ppage 0x0
 					r	vpage 0x60001	ppage 0x0
 					r	vpage 0x60002	ppage 0x0
@@ -54,7 +54,7 @@ vm_map returned 0x600060000
 					r	vpage 0x60006	ppage 0x0
 vm_map		(0x0, 0)
 vm_map returned 0x600070000
-					returning to (244384) with r|w pages:
+					returning to (265321) with r|w pages:
 					r	vpage 0x60000	ppage 0x0
 					r	vpage 0x60001	ppage 0x0
 					r	vpage 0x60002	ppage 0x0
@@ -65,7 +65,7 @@ vm_map returned 0x600070000
 					r	vpage 0x60007	ppage 0x0
 vm_fault	(0x600070000, write)
 vm_fault returned 0
-					returning to (244384) with r|w pages:
+					returning to (265321) with r|w pages:
 					r	vpage 0x60000	ppage 0x0
 					r	vpage 0x60001	ppage 0x0
 					r	vpage 0x60002	ppage 0x0
@@ -76,7 +76,7 @@ vm_fault returned 0
 					rw	vpage 0x60007	ppage 0x1
 vm_fault	(0x600010000, write)
 vm_fault returned 0
-					returning to (244384) with r|w pages:
+					returning to (265321) with r|w pages:
 					r	vpage 0x60000	ppage 0x0
 					rw	vpage 0x60001	ppage 0x2
 					r	vpage 0x60002	ppage 0x0
@@ -87,7 +87,7 @@ vm_fault returned 0
 					rw	vpage 0x60007	ppage 0x1
 vm_fault	(0x600020000, write)
 vm_fault returned 0
-					returning to (244384) with r|w pages:
+					returning to (265321) with r|w pages:
 					r	vpage 0x60000	ppage 0x0
 					rw	vpage 0x60001	ppage 0x2
 					rw	vpage 0x60002	ppage 0x3
@@ -98,7 +98,7 @@ vm_fault returned 0
 					rw	vpage 0x60007	ppage 0x1
 vm_map		(0x600070000, 0)
 vm_map returned 0x600080000
-					returning to (244384) with r|w pages:
+					returning to (265321) with r|w pages:
 					r	vpage 0x60000	ppage 0x0
 					rw	vpage 0x60001	ppage 0x2
 					rw	vpage 0x60002	ppage 0x3
@@ -109,7 +109,7 @@ vm_map returned 0x600080000
 					rw	vpage 0x60007	ppage 0x1
 vm_map		(0x600010000, 0)
 vm_map returned 0x600090000
-					returning to (244384) with r|w pages:
+					returning to (265321) with r|w pages:
 					r	vpage 0x60000	ppage 0x0
 					rw	vpage 0x60001	ppage 0x2
 					rw	vpage 0x60002	ppage 0x3
@@ -122,7 +122,7 @@ vm_fault	(0x600080000, read)
 file_write	(<swap>, 7)
 file_read	(papers.txt, 0)
 vm_fault returned 0
-					returning to (244384) with r|w pages:
+					returning to (265321) with r|w pages:
 					r	vpage 0x60000	ppage 0x0
 					rw	vpage 0x60001	ppage 0x2
 					rw	vpage 0x60002	ppage 0x3
@@ -134,7 +134,7 @@ vm_fault returned 0
 					r	vpage 0x60009	ppage 0x1
 vm_fault	(0x600080000, write)
 vm_fault returned 0
-					returning to (244384) with r|w pages:
+					returning to (265321) with r|w pages:
 					r	vpage 0x60000	ppage 0x0
 					rw	vpage 0x60001	ppage 0x2
 					rw	vpage 0x60002	ppage 0x3

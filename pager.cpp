@@ -295,13 +295,14 @@ int alloc(){
   myPrint("clock_q: ", "");
   print_queue(clock_q);
   if (!free_ppage.empty()){
+    myPrint("a free page!: ", "");
     ppage = free_ppage.front();
     free_ppage.pop();
     //want the clock to be aware of the new ppage
     for(size_t i = 0; i < pcnt - 1; i++){
       if (clock_q.front() != ppage){
         clock_q.push(clock_q.front());
-        psuff[clock_q.front()].ref = 0;
+        /*psuff[clock_q.front()].ref = 0;*/
         /*if(core.find(clock_q.front()) != core.end()){*/
         /*  for(auto pte : core[clock_q.front()]){*/
         /*    pte->read_enable = pte->write_enable = 0;*/
@@ -333,6 +334,7 @@ int cow(page_table_entry_t* pte, char* content){
   p2p(ppage, content);
   //update core
   core[pte->ppage].erase(pte);
+  if(core[pte->ppage].empty()) core.erase(pte->ppage);
   pte->ppage = ppage;
   core[pte->ppage].insert(pte);
   //update ref and dirty and write read
@@ -353,13 +355,16 @@ int cow(page_table_entry_t* pte, char* content){
 }
 
 bool is_cow(page_table_entry_t* pte){
-  return (core[pte->ppage].size() > 1 && infile[pte].ftype == file_t::SWAP) || pte->ppage == pinned;
+  //pte should exist in core
+  return (core.find(pte->ppage) != core.end() && core[pte->ppage].size() > 1 && infile[pte].ftype == file_t::SWAP) || pte->ppage == pinned;
 }
 int vm_fault(const void *addr, bool write_flag){
   myPrint("core map: ", "");
   print_map(core);
   uint64_t page = (reinterpret_cast<uint64_t>(addr) - reinterpret_cast<uint64_t>(VM_ARENA_BASEADDR)) >> 16;
-  if (page > bound) {
+  myPrint("page: ", page);
+  myPrint("bound = ", bound);
+  if (page >= bound) {
     myPrint("page = ", page);
     myPrint("bound = ", bound);
     return -1;
@@ -402,6 +407,7 @@ int vm_fault(const void *addr, bool write_flag){
     } else {
       assert(it_psuff != psuff.end());//shouldn't be pinned page
       it_psuff->second.dirty = 1;
+      //pte->ppage should be updated by now
       for(auto p : core[pte->ppage]){
         p->write_enable = 1;
       }
@@ -416,12 +422,25 @@ int vm_fault(const void *addr, bool write_flag){
 
 std::string vm_to_string(const char *filename){
   uint32_t vpage = (reinterpret_cast<uintptr_t>(filename) - reinterpret_cast<uintptr_t>(VM_ARENA_BASEADDR)) >> 16;
-  if(page_table_base_register[vpage].read_enable == 0) vm_fault(filename, 0);
+  /*if(page_table_base_register[vpage].read_enable == 0) vm_fault(filename, 0);*/
   uint32_t offset = reinterpret_cast<uintptr_t>(filename)& 0xFFFF;
   /*std::cout << "vpage = " << vpage << '\n';*/
   std::string rs;
-  while(static_cast<char *>(vm_physmem)[page_table_base_register[vpage].ppage * VM_PAGESIZE + offset]!= '\0'){
+  while(1){
+    //trigger fault if not in  arena
+    /*std::cout << "here\n";*/
+    if(page_table_base_register[vpage].read_enable == 0 && vm_fault(VM_ARENA_BASEADDR + vpage * VM_PAGESIZE, 0) == -1)
+    {
+      myPrint("fault", "");
+      return "@FAULT";
+
+    }
+    /*std::cout << "here\n";*/
+    if (static_cast<char *>(vm_physmem)[page_table_base_register[vpage].ppage * VM_PAGESIZE + offset] == '\0')
+      break;
+    //the string we want to read
     rs += static_cast<char *>(vm_physmem)[page_table_base_register[vpage].ppage * VM_PAGESIZE + offset];
+    myPrint("rs: ", rs);
     if (offset == 0xFFFF) {
       vpage++;
       assert(vpage < bound);
@@ -440,13 +459,11 @@ void* vm_map(const char *filename, unsigned int block){
       /*std::cerr << "free_block is empty\n";*/
       return nullptr;
   }
-  uint32_t size = ++all_pt[curr_pid].size;
-  /*std::cout << "size = " << size << '\n';*/
-  bound = size;
-  page_table_entry_t* new_entry = page_table_base_register + size - 1;
+  page_table_entry_t* new_entry = page_table_base_register + all_pt[curr_pid].size;
   //file-backed
   if(filename != nullptr){
     std::string file_str = vm_to_string(filename);
+    if(file_str == "@FAULT") return nullptr;
     myPrint("file_str = ", file_str);
     auto it = filemap.find(file_str);
     if (it != filemap.end()){
@@ -478,7 +495,8 @@ void* vm_map(const char *filename, unsigned int block){
     core[new_entry->ppage].insert(new_entry);
   }
   //update core
-  return (char*)VM_ARENA_BASEADDR + (size - 1) * VM_PAGESIZE;
+  bound = ++all_pt[curr_pid].size;
+  return (char*)VM_ARENA_BASEADDR + (bound - 1) * VM_PAGESIZE;
 }
 
 void vm_discard(page_table_entry_t* pte){
