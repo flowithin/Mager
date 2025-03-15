@@ -156,7 +156,7 @@ void p2p(uint32_t loc, char* content){
     memset(static_cast<char *>(vm_physmem) + loc * VM_PAGESIZE, 0, VM_PAGESIZE);
 }
 int runclock(){
-  for(size_t i = 0; i < clock_q.size(); i++){
+  while(1){
     clock_q.push(clock_q.front());
     clock_q.pop();
     if (psuff[clock_q.back()].ref){
@@ -233,7 +233,7 @@ int vm_create(pid_t parent_pid, pid_t child_pid){
   }
   eblcnt -= numsw;
   all_pt[child_pid] = Pt({size, numsw, child_pt});
-  if(it != all_pt.end())
+  if(it != all_pt.end() && it->second.size != 0)
     assert(it->second.st[it->second.size-1].ppage == all_pt[child_pid].st[all_pt[child_pid].size - 1].ppage);
   return 0;
 }
@@ -254,6 +254,7 @@ int pm_evict(){
   assert(core.find(ppage) != core.end());
   //randomly choose one to see if they are in file
   page_table_entry_t* pte = *core[ppage].begin();
+  myPrint("ppage = ", ppage);
   myPrint("pte = ", pte);
   auto _it = infile.find(pte);
   assert(_it != infile.end());
@@ -301,17 +302,16 @@ int alloc(){
       if (clock_q.front() != ppage){
         clock_q.push(clock_q.front());
         psuff[clock_q.front()].ref = 0;
-        if(core.find(clock_q.front()) != core.end()){
-          for(auto pte : core[clock_q.front()]){
-            pte->read_enable = pte->write_enable = 0;
-          }
-        }
+        /*if(core.find(clock_q.front()) != core.end()){*/
+        /*  for(auto pte : core[clock_q.front()]){*/
+        /*    pte->read_enable = pte->write_enable = 0;*/
+        /*  }*/
+        /*}*/
       }
       clock_q.pop();
     }
     clock_q.push(ppage);
     psuff[ppage].ref = 1;
-
   } else {
     //need evicting
     ppage = pm_evict();
@@ -326,6 +326,7 @@ int cow(page_table_entry_t* pte, char* content){
   //copy on write
   /*std::cout << "cow\n";*/
   //allocate one ppage for it
+  myPrint("cow\n", "");
   int ppage = alloc();
   if(ppage == -1) return -1;
   //write the read value to the new loc
@@ -355,6 +356,8 @@ bool is_cow(page_table_entry_t* pte){
   return (core[pte->ppage].size() > 1 && infile[pte].ftype == file_t::SWAP) || pte->ppage == pinned;
 }
 int vm_fault(const void *addr, bool write_flag){
+  myPrint("core map: ", "");
+  print_map(core);
   uint64_t page = (reinterpret_cast<uint64_t>(addr) - reinterpret_cast<uint64_t>(VM_ARENA_BASEADDR)) >> 16;
   if (page > bound) {
     myPrint("page = ", page);
@@ -371,7 +374,8 @@ int vm_fault(const void *addr, bool write_flag){
     if (epage == -1) return -1;
     void* eaddr =static_cast<char*>(vm_physmem) + epage * VM_PAGESIZE;
     myPrint("epage: ", epage);
-    if(file_read(it->second.filename.c_str(), it->second.block, eaddr) == -1)
+    /*std::cout << "vpage 1: " << (*core[1].begin())->read_enable << (*core[1].begin())->write_enable << '\n';*/
+    if(file_read(it->second.ftype == file_t::FILE_B ? it->second.filename.c_str() : nullptr, it->second.block, eaddr) == -1)
       return -1;
     //others lifted 
     auto& lifted = (it->second.ftype == file_t::SWAP)
@@ -386,7 +390,7 @@ int vm_fault(const void *addr, bool write_flag){
     }
   }//if infile
   auto it_psuff = psuff.find(pte->ppage);
-  if(it_psuff != psuff.end())
+  if(it_psuff != psuff.end())//except for pinned page
     it_psuff->second.ref = 1;
   pte->read_enable = 1;
   if (write_flag)
@@ -412,6 +416,7 @@ int vm_fault(const void *addr, bool write_flag){
 
 std::string vm_to_string(const char *filename){
   uint32_t vpage = (reinterpret_cast<uintptr_t>(filename) - reinterpret_cast<uintptr_t>(VM_ARENA_BASEADDR)) >> 16;
+  if(page_table_base_register[vpage].read_enable == 0) vm_fault(filename, 0);
   uint32_t offset = reinterpret_cast<uintptr_t>(filename)& 0xFFFF;
   /*std::cout << "vpage = " << vpage << '\n';*/
   std::string rs;

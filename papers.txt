@@ -1,4 +1,4 @@
-dddddddddd001111:Computer System Design
+}}}}}}}}}}001111:Computer System Design
 July 1983
 Butler W. Lampson
 Computer Science Laboratory
