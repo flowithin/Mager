@@ -270,6 +270,8 @@ int pm_evict(){
   //write back if dirty
     void* eaddr = (char*)(vm_physmem) + ppage * VM_PAGESIZE;
     file_write(filename, block, eaddr);
+    //clear the dirty bit
+    psuff[ppage].dirty = 0;
   }
   //downward all pte
   if(_it->second.ftype == file_t::FILE_B){
@@ -513,8 +515,10 @@ void vm_discard(page_table_entry_t* pte){
     case file_t::FILE_B: {
       if (core[pte->ppage].size() == 1 ){
         //write back
-        if(!it->second.infile && psuff[pte->ppage].dirty)
+        if(!it->second.infile && psuff[pte->ppage].dirty){
           file_write(it->second.filename.c_str(), it->second.block, (char*)vm_physmem + pte->ppage * VM_PAGESIZE);
+          psuff[pte->ppage].dirty = 0;
+        }
         if(filemap[it->second.filename].size() == 1)
           filemap.erase(it->second.filename);
         else

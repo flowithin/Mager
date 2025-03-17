@@ -1,4 +1,4 @@
-NNNNNNNNNN001111:Computer System Design
+oooooooooo001111:Computer System Design
 July 1983
 Butler W. Lampson
 Computer Science Laboratory
@@ -1178,9 +1178,7 @@ The Pup internet [3], faced with a much more variable set of transport
 facilities, has always ruthlessly discarded packets at the first sign of
 congestion.
 
-4. Fault-tolerance
-
-    The unavoidable price of reliability is simplicity. (C. Hoare)
+4. Fault-toleranch####Wkh unavoidable price of reliability is simplicity. (C. Hoare)
 
 Making a system reliable is not really hard, if you know how to go about
 it. But retrofitting reliability to an existing design is very difficult.
@@ -2508,7 +2506,7 @@ of UNJX as a whole.
 
 The PDP-1 l hardware detects a number of program
 faults, such as references to nonexistent memory,
-unimplemented instructions, and odd addresses used
+unimplemented instructiont-!boe!pee addresses used
 where an even address is required. Such faults cause the
 processor to trap to a system routine. When an illegal
 action is caught, unless other arrangements have been
