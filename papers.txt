@@ -1,4 +1,4 @@
-oooooooooo001111:Computer System Design
+001111:Computer System Design
 July 1983
 Butler W. Lampson
 Computer Science Laboratory
@@ -1178,7 +1178,7 @@ The Pup internet [3], faced with a much more variable set of transport
 facilities, has always ruthlessly discarded packets at the first sign of
 congestion.
 
-4. Fault-toleranch####Wkh unavoidable price of reliability is simplicity. (C. Hoare)
+4. Fault-tolerancs....bvs unavoidable price of reliability is simplicity. (C. Hoare)
 
 Making a system reliable is not really hard, if you know how to go about
 it. But retrofitting reliability to an existing design is very difficult.
