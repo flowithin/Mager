@@ -19,7 +19,7 @@
 #include <string>
 #include <system_error>
 #include <unordered_set>
-/*#define LOG*/
+#define LOG
 
 struct PMB{bool ref, dirty;};
 struct Clock{
@@ -161,7 +161,8 @@ void myPrint(std::string words, const T& t){
   /*if (func != nullptr)*/
   /*  *func(t);*/
   /*else */
-    std::cout << t << "\n";
+
+  std::cout << std::hex << t << "\n";
 #endif
 }
 
@@ -283,8 +284,6 @@ int pm_evict(){
     if(filemap[ghost[ppage].first].empty())
       filemap.erase(ghost[ppage].first);
     ghost.erase(ppage); 
-    myPrint("ghost:", "");
-    print_map(ghost);
     return ppage;
   }
   myPrint("core: ", "");
@@ -316,11 +315,8 @@ int pm_evict(){
   //downward all pte
   if(_it->second.ftype == file_t::FILE_B){
     //not in physmem anymore
-    /*filemap[filename][_it->second.block].ppage = pinned;*/
-    /*std::cout << "here\n";*/
     for(auto v : filemap[filename][_it->second.block].vpset){
       v->write_enable = v->read_enable = 0;
-      //update infile
       infile[v].infile = true;
     }
   } else {
@@ -413,7 +409,6 @@ int vm_fault(const void *addr, bool write_flag){
     return -1;
   }
   page_table_entry_t* pte = page_table_base_register + page;
-  bool _is_cow = is_cow(pte);
   auto it = infile.find(pte);
   assert(it != infile.end());
   if (it->second.infile){
@@ -446,6 +441,7 @@ int vm_fault(const void *addr, bool write_flag){
       pte->write_enable = 1;//if dirty no need to set dirty
   }//except for pinned page
   pte->read_enable = 1;
+  bool _is_cow = is_cow(pte);
   if (write_flag)
   {
     if (_is_cow){
@@ -469,6 +465,8 @@ int vm_fault(const void *addr, bool write_flag){
 
 
 uint32_t a2p(const char* addr){
+  /*myPrint("addr = ", reinterpret_cast<uintptr_t>(addr));*/
+  /*myPrint("return = ", (reinterpret_cast<uintptr_t>(addr) - reinterpret_cast<uintptr_t>(VM_ARENA_BASEADDR)) >> 16);*/
   return (reinterpret_cast<uintptr_t>(addr) - reinterpret_cast<uintptr_t>(VM_ARENA_BASEADDR)) >> 16;
 }
 char mem(const char* addr){
@@ -487,9 +485,9 @@ std::string vm_to_string(const char *filename){
       break;
     //the string we want to read
     rs += mem(filename + i++);
-    vpage = a2p(filename);
+    vpage = a2p(filename + i);
   }
-  myPrint("vm_to_string", "");
+  /*myPrint("vm_to_string", "");*/
 
   return rs;
 }
@@ -511,19 +509,23 @@ void* vm_map(const char *filename, unsigned int block){
       auto _it = it->second.find(block);
       if(_it != it->second.end()){
         //block matched
+        myPrint("matched! ","");
         new_entry->ppage = _it->second.ppage;
         if(ghost.find(_it->second.ppage) != ghost.end()){
           ghost.erase(_it->second.ppage);
           // NOTE: not sure
           // to set ref
           new_entry->read_enable = new_entry->write_enable = 0;
+        } else{
+          *new_entry = **_it->second.vpset.begin();
         }
-        _it->second.vpset.insert(new_entry);
-        bool is_infile = _it->second.vpset.empty() || (!_it->second.vpset.empty() && infile[*_it->second.vpset.begin()].infile);
+        //ghost -> not infile
+        bool is_infile = (!_it->second.vpset.empty() && infile[*_it->second.vpset.begin()].infile);
         infile[new_entry] = Infile{file_t::FILE_B, is_infile, block, file_str};
         //update core only if in mem
-        if(!infile[new_entry].infile)
+        if(!is_infile)
           core[new_entry->ppage].insert(new_entry);
+        _it->second.vpset.insert(new_entry);
       } else goto notmatched;
     } else {
     notmatched:
@@ -565,6 +567,7 @@ void vm_discard(page_table_entry_t* pte){
       break;
     }
     case file_t::FILE_B: {
+      //deeply clean filemap
       filemap[it->second.filename][it->second.block].vpset.erase(pte);
       if(it->second.infile){
         if(filemap[it->second.filename][it->second.block].vpset.empty())
@@ -616,7 +619,7 @@ void vm_destroy(){
   print_map(ghost);
  
   //free page table
-  free(all_pt[curr_pid].st);
+  delete[] all_pt[curr_pid].st;
   all_pt.erase(curr_pid);
   myPrint("free_block: ", "");
   print_queue(free_block);

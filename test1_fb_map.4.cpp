@@ -12,6 +12,7 @@ using std::cout;
  * inside the if statement
  * */
 int main() {
+  pid_t pid = fork();
   /*std::cout << "pid = " << pid << '\n';*/
   /* Allocate swap-backed page from the arena */
   char* filename = static_cast<char *>(vm_map(nullptr, 0));
@@ -21,23 +22,42 @@ int main() {
   //all pointing to 0
   strcpy(filename, "papers.txt");
   char* p;
-
+  if(pid == 0){
+    p = static_cast<char *>(vm_map (filename, 1));
+    cout << ++p[0];
+    p = static_cast<char *>(vm_map (filename, 2));
+    cout << ++p[0];
+  }
   //these should evict all the pages
   strcpy(filename1, "papers.txt");
   strcpy(filename2, "papers.txt");
   /*strcpy(filename1, "papers.txt");*/
   //all ppage has been written to (swap)
+
   /* Map a page from the specified file */
   p = static_cast<char *>(vm_map (filename, 0));
   char* p1 = static_cast<char *>(vm_map (filename1, 0));
   char* p2 = static_cast<char *>(vm_map (filename1, 0));
   char* p3 = static_cast<char *>(vm_map (filename1, 1));
   char* p4 = static_cast<char *>(vm_map (filename1, 2));
-  char x = p[0];
-  char y = p3[0];
-  //now should have rw=0
-  char z = p4[0]++;
-  char f= filename1[0];
-  //shoud now have rw=0;
-  z = p4[0];
+
+  /* Print the first part of the paper */
+  for (unsigned int i=0; i<10; i++) {
+    //need evicting(bring from file)
+    cout << p[i];
+    //write fault
+    p[i] ++;
+  }
+  cout << '\n';
+  for (unsigned int i=0; i<10; i++) {
+    //already in memory
+    cout << p3[i];
+    p3[i] ++;
+  }
+ 
+  cout << '\n';
+  for (unsigned int i=0; i<10; i++) {
+    cout << p4[i];
+    cout << p4[i];
+  }
 }
