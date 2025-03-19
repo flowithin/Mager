@@ -272,6 +272,7 @@ void vm_switch(pid_t pid){
 
 
 int pm_evict(){
+  myPrint("pm_evict", "");
   int ppage = runclock();
   //no one can be evicted
   if (ppage == -1) return -1;
@@ -282,8 +283,12 @@ int pm_evict(){
     if(filemap[ghost[ppage].first].empty())
       filemap.erase(ghost[ppage].first);
     ghost.erase(ppage); 
+    myPrint("ghost:", "");
+    print_map(ghost);
     return ppage;
   }
+  myPrint("core: ", "");
+  print_map(core);
   assert(core.find(ppage) != core.end());
   //randomly choose one to see if they are in file
   page_table_entry_t* pte = *core[ppage].begin();
@@ -305,17 +310,19 @@ int pm_evict(){
     //clear the dirty bit
     psuff[ppage].dirty = 0;
   }
+    /*std::cout << "here\n";*/
+    myPrint("filemap:", "");
+    print_map(filemap);
   //downward all pte
   if(_it->second.ftype == file_t::FILE_B){
     //not in physmem anymore
     /*filemap[filename][_it->second.block].ppage = pinned;*/
+    /*std::cout << "here\n";*/
     for(auto v : filemap[filename][_it->second.block].vpset){
       v->write_enable = v->read_enable = 0;
       //update infile
       infile[v].infile = true;
     }
-    
-
   } else {
     for(auto v : swfile[block]){
       v->write_enable = v->read_enable = 0;
@@ -393,8 +400,8 @@ int cow(page_table_entry_t* pte, char* content){
 }
 
 bool is_cow(page_table_entry_t* pte){
-  //pte should exist in core
-  return (core.find(pte->ppage) != core.end() && core[pte->ppage].size() > 1 && infile[pte].ftype == file_t::SWAP) || pte->ppage == pinned;
+  //pte should exist in core and also im mem
+  return (core.find(pte->ppage) != core.end() && core[pte->ppage].size() > 1 && infile[pte].ftype == file_t::SWAP && !infile[pte].infile) || pte->ppage == pinned;
 }
 int vm_fault(const void *addr, bool write_flag){
   myPrint("core map: ", "");
@@ -418,7 +425,6 @@ int vm_fault(const void *addr, bool write_flag){
     /*std::cout << "vpage 1: " << (*core[1].begin())->read_enable << (*core[1].begin())->write_enable << '\n';*/
     if(file_read(it->second.ftype == file_t::FILE_B ? it->second.filename.c_str() : nullptr, it->second.block, eaddr) == -1)
       return -1;
-    
     //others lifted 
     auto& lifted = (it->second.ftype == file_t::SWAP)
       ? swfile[it->second.block]
@@ -434,8 +440,11 @@ int vm_fault(const void *addr, bool write_flag){
       filemap[it->second.filename][it->second.block].ppage = epage;
   }//if infile
   auto it_psuff = psuff.find(pte->ppage);
-  if(it_psuff != psuff.end())//except for pinned page
+  if(it_psuff != psuff.end()){
     it_psuff->second.ref = 1;
+    if(it_psuff->second.dirty)
+      pte->write_enable = 1;//if dirty no need to set dirty
+  }//except for pinned page
   pte->read_enable = 1;
   if (write_flag)
   {
@@ -503,9 +512,13 @@ void* vm_map(const char *filename, unsigned int block){
       if(_it != it->second.end()){
         //block matched
         new_entry->ppage = _it->second.ppage;
-        new_entry->read_enable = new_entry->write_enable = 1;
+        if(ghost.find(_it->second.ppage) != ghost.end()){
+          ghost.erase(_it->second.ppage);
+          // NOTE: not sure
+          // to set ref
+          new_entry->read_enable = new_entry->write_enable = 0;
+        }
         _it->second.vpset.insert(new_entry);
-        ghost.erase(_it->second.ppage);
         bool is_infile = _it->second.vpset.empty() || (!_it->second.vpset.empty() && infile[*_it->second.vpset.begin()].infile);
         infile[new_entry] = Infile{file_t::FILE_B, is_infile, block, file_str};
         //update core only if in mem
@@ -552,19 +565,12 @@ void vm_discard(page_table_entry_t* pte){
       break;
     }
     case file_t::FILE_B: {
-      if (core[pte->ppage].size() == 1 && it->second.infile){
-        //write back
-        /*if(!it->second.infile && psuff[pte->ppage].dirty){*/
-        /*  file_write(it->second.filename.c_str(), it->second.block, (char*)vm_physmem + pte->ppage * VM_PAGESIZE);*/
-        /*  psuff[pte->ppage].dirty = 0;*/
-        /*}*/
-        if(filemap[it->second.filename].size() == 1)
-          filemap.erase(it->second.filename);
-        else
+      filemap[it->second.filename][it->second.block].vpset.erase(pte);
+      if(it->second.infile){
+        if(filemap[it->second.filename][it->second.block].vpset.empty())
           filemap[it->second.filename].erase(it->second.block);
-        //update filemap
-      }else{
-        filemap[it->second.filename][it->second.block].vpset.erase(pte);
+        if(filemap[it->second.filename].empty())
+          filemap.erase(it->second.filename);
       }
       break;
     }
@@ -615,12 +621,5 @@ void vm_destroy(){
   myPrint("free_block: ", "");
   print_queue(free_block);
   myPrint("eblcnt: ", eblcnt);
-  /*std::cout << "vm_destroyed\n";*/
-  /*for(size_t i = 0; i < free_ppage.size(); i++){*/
-  /*  std::cout << free_ppage.front() << " ";*/
-  /*  free_ppage.push(free_ppage.front());*/
-  /*  free_ppage.pop();*/
-  /*}*/
-  /*std::cout << '\n';*/
 }
 

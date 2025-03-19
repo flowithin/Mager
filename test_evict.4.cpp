@@ -22,7 +22,10 @@ int main() {
   strcpy(filename1, "papers.txt");
   strcpy(filename2, "papers.txt");
   strcpy(filename3, "papers.txt");
-  //now must evict one page
+  //now must evict one page now all r/w=0
+  char x = filename1[0];
+  //bring back from mem with read
+  char y = filename[0];
   strcpy(filename4, "papers.txt");
   /*strcpy(filename1, "papers.txt");*/
 

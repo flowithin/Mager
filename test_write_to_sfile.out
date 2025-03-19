@@ -1,64 +1,64 @@
 Pager started with 4 physical memory pages
-vm_create	(107069, 301386)
+vm_create	(107069, 343800)
 vm_create returned 0
-vm_switch	(301386)
-					returning to (301386) with r|w pages:
+vm_switch	(343800)
+					returning to (343800) with r|w pages:
 vm_map		(0x0, 0)
 vm_map returned 0x600000000
-					returning to (301386) with r|w pages:
+					returning to (343800) with r|w pages:
 					r	vpage 0x60000	ppage 0x0
 vm_map		(0x0, 0)
 vm_map returned 0x600010000
-					returning to (301386) with r|w pages:
+					returning to (343800) with r|w pages:
 					r	vpage 0x60000	ppage 0x0
 					r	vpage 0x60001	ppage 0x0
 vm_map		(0x0, 0)
 vm_map returned 0x600020000
-					returning to (301386) with r|w pages:
+					returning to (343800) with r|w pages:
 					r	vpage 0x60000	ppage 0x0
 					r	vpage 0x60001	ppage 0x0
 					r	vpage 0x60002	ppage 0x0
 vm_fault	(0x600000000, write)
 vm_fault returned 0
-					returning to (301386) with r|w pages:
+					returning to (343800) with r|w pages:
 					rw	vpage 0x60000	ppage 0x1
 					r	vpage 0x60001	ppage 0x0
 					r	vpage 0x60002	ppage 0x0
 vm_fault	(0x600010000, write)
 vm_fault returned 0
-					returning to (301386) with r|w pages:
+					returning to (343800) with r|w pages:
 					rw	vpage 0x60000	ppage 0x1
 					rw	vpage 0x60001	ppage 0x2
 					r	vpage 0x60002	ppage 0x0
 vm_fault	(0x600020000, write)
 vm_fault returned 0
-					returning to (301386) with r|w pages:
+					returning to (343800) with r|w pages:
 					rw	vpage 0x60000	ppage 0x1
 					rw	vpage 0x60001	ppage 0x2
 					rw	vpage 0x60002	ppage 0x3
 vm_map		(0x600000000, 0)
 vm_map returned 0x600030000
-					returning to (301386) with r|w pages:
+					returning to (343800) with r|w pages:
 					rw	vpage 0x60000	ppage 0x1
 					rw	vpage 0x60001	ppage 0x2
 					rw	vpage 0x60002	ppage 0x3
 vm_map		(0x600010000, 0)
 vm_map returned 0x600040000
-					returning to (301386) with r|w pages:
+					returning to (343800) with r|w pages:
 					rw	vpage 0x60000	ppage 0x1
 					rw	vpage 0x60001	ppage 0x2
 					rw	vpage 0x60002	ppage 0x3
+					rw	vpage 0x60004	ppage 0x0
 vm_fault	(0x600030000, read)
 file_write	(<swap>, 0)
 file_read	(papers.txt, 0)
 vm_fault returned 0
-					returning to (301386) with r|w pages:
+					returning to (343800) with r|w pages:
 					r	vpage 0x60003	ppage 0x1
-					r	vpage 0x60004	ppage 0x1
+					rw	vpage 0x60004	ppage 0x1
 vm_fault	(0x600030000, write)
 vm_fault returned 0
-					returning to (301386) with r|w pages:
+					returning to (343800) with r|w pages:
 					rw	vpage 0x60003	ppage 0x1
 					rw	vpage 0x60004	ppage 0x1
 vm_destroy
-file_write	(papers.txt, 0)
