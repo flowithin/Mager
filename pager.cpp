@@ -529,7 +529,6 @@ void* vm_map(const char *filename, unsigned int block){
       } else goto notmatched;
     } else {
     notmatched:
-      /*std::cout << "debug\n";*/
       filemap[file_str][block].vpset.insert(new_entry);
       *new_entry = {.ppage = pinned, .read_enable = 0, .write_enable = 0};
       infile[new_entry] = Infile{file_t::FILE_B, true, block, file_str};

@@ -18,13 +18,23 @@ int main() {
   //all pointing to 0
   strcpy(filename, "papers.txt");
   char* p = static_cast<char *>(vm_map (filename, 0));
-  char x = p[0];
-  char* p1 = static_cast<char *>(vm_map (filename, 0));
+  char x;
+  std::cout << p[0];
+  char* p1 = static_cast<char *>(vm_map (filename, 1));
   x = p1[0]++;
   strcpy(filename1, "papers.txt");
   strcpy(filename2, "papers.txt");
   strcpy(filename3, "papers.txt");
   x = p1[0]++;
+  p[0]++;
+  strcpy(filename1, "papers.txt");
+  strcpy(filename2, "papers.txt");
+  strcpy(filename3, "papers.txt");
+  x = p1[0]++;
+  x = p1[0]++;
+  p[0]++;
+  std::cout << p[0] << p1[0];
+  std::cout << x;
   /*strcpy(filename1, "papers.txt");*/
   //all ppage has been written to (swap)
 
