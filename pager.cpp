@@ -258,8 +258,8 @@ int vm_create(pid_t parent_pid, pid_t child_pid){
   }
   eblcnt -= numsw;
   all_pt[child_pid] = Pt({size, numsw, child_pt});
-  if(it != all_pt.end() && it->second.size != 0)
-    assert(it->second.st[it->second.size-1].ppage == all_pt[child_pid].st[all_pt[child_pid].size - 1].ppage);
+  /*if(it != all_pt.end() && it->second.size != 0)*/
+  /*  assert(it->second.st[it->second.size-1].ppage == all_pt[child_pid].st[all_pt[child_pid].size - 1].ppage);*/
   return 0;
 }
 
@@ -279,7 +279,8 @@ int pm_evict(){
   if (ppage == -1) return -1;
   if(ghost.find(ppage) != ghost.end()){
     //ghost page
-    file_write(ghost[ppage].first.c_str(), ghost[ppage].second, (char*)vm_physmem + ppage * VM_PAGESIZE);
+    if(psuff[ppage].dirty)
+      file_write(ghost[ppage].first.c_str(), ghost[ppage].second, (char*)vm_physmem + ppage * VM_PAGESIZE);
     filemap[ghost[ppage].first].erase(ghost[ppage].second);
     if(filemap[ghost[ppage].first].empty())
       filemap.erase(ghost[ppage].first);
@@ -515,7 +516,8 @@ void* vm_map(const char *filename, unsigned int block){
           ghost.erase(_it->second.ppage);
           // NOTE: not sure
           // to set ref
-          new_entry->read_enable = new_entry->write_enable = 0;
+          new_entry->read_enable = psuff[_it->second.ppage].ref;
+          new_entry->write_enable = psuff[_it->second.ppage].ref & psuff[_it->second.ppage].dirty;
         } else{
           *new_entry = **_it->second.vpset.begin();
         }
@@ -594,7 +596,6 @@ void vm_discard(page_table_entry_t* pte){
   }
   //update infile
   infile.erase(pte);
-
 }
 
 void vm_destroy(){

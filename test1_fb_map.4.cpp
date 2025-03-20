@@ -52,12 +52,12 @@ int main() {
   strcpy(filename2, "papers.txt");
   //now should be infile rw=0
   char* p5 = static_cast<char *>(vm_map (filename1, 1));
-  p4[0]++;
+  std::cout << p4[0];
   //now it is inmem rw=0
-  char* p6 = static_cast<char *>(vm_map (filename1, 2));
+  char* p6 = static_cast<char *>(vm_map (filename1, 0));
   p6[0]++;
   //now is rw=1 inmem
-  char* p7 = static_cast<char *>(vm_map (filename1, 2));
+  char* p7 = static_cast<char *>(vm_map (filename1, 0));
   std::cout << p5[0]++;
 
   cout << '\n';
@@ -69,7 +69,6 @@ int main() {
  
   cout << '\n';
   for (unsigned int i=0; i<10; i++) {
-    cout << p4[i];
     cout << p4[i];
   }
 }
