@@ -19,7 +19,7 @@
 #include <string>
 #include <system_error>
 #include <unordered_set>
-#define LOG
+/*#define LOG*/
 
 struct PMB{bool ref, dirty;};
 struct Clock{
