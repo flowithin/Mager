@@ -19,7 +19,7 @@
 #include <string>
 #include <system_error>
 #include <unordered_set>
-/*#define LOG*/
+#define LOG
 
 struct PMB{bool ref, dirty;};
 struct Clock{
@@ -427,6 +427,8 @@ int vm_fault(const void *addr, bool write_flag){
     auto& lifted = (it->second.ftype == file_t::SWAP)
       ? swfile[it->second.block]
       : filemap[it->second.filename][it->second.block].vpset;
+    myPrint("filemap: ", "");
+    print_map(filemap);
     for(auto l: lifted){
       infile[l].infile = false;
       l->ppage = epage;
@@ -437,13 +439,19 @@ int vm_fault(const void *addr, bool write_flag){
     if(it->second.ftype == file_t::FILE_B)
       filemap[it->second.filename][it->second.block].ppage = epage;
   }//if infile
+  pte->read_enable = 1;
   auto it_psuff = psuff.find(pte->ppage);
   if(it_psuff != psuff.end()){
     it_psuff->second.ref = 1;
     if(it_psuff->second.dirty)
       pte->write_enable = 1;//if dirty no need to set dirty
+    if(it->second.ftype == file_t::FILE_B){
+    auto& lifted = filemap[it->second.filename][it->second.block].vpset;
+    for(auto l: lifted){
+      *l = *pte;
+      }
+    }
   }//except for pinned page
-  pte->read_enable = 1;
   bool _is_cow = is_cow(pte);
   if (write_flag)
   {
@@ -515,6 +523,7 @@ void* vm_map(const char *filename, unsigned int block){
         myPrint("matched! ","");
         new_entry->ppage = _it->second.ppage;
         if(ghost.find(_it->second.ppage) != ghost.end()){
+          //it is a ghost page!
           ghost.erase(_it->second.ppage);
           // NOTE: not sure
           // to set ref
@@ -527,8 +536,18 @@ void* vm_map(const char *filename, unsigned int block){
         bool is_infile = (!_it->second.vpset.empty() && infile[*_it->second.vpset.begin()].infile);
         infile[new_entry] = Infile{file_t::FILE_B, is_infile, block, file_str};
         //update core only if in mem
-        if(!is_infile)
+        if(!is_infile){
           core[new_entry->ppage].insert(new_entry);
+          //clock_q updating
+          for(size_t i = 0; i < pcnt - 1; i++){
+            if (clock_q.front() != new_entry->ppage){
+              clock_q.push(clock_q.front());
+            }
+            clock_q.pop();
+          }
+          clock_q.push(new_entry->ppage);
+        }
+        //filemap update
         _it->second.vpset.insert(new_entry);
       } else goto notmatched;
     } else {
@@ -571,6 +590,7 @@ void vm_discard(page_table_entry_t* pte){
     }
     case file_t::FILE_B: {
       //deeply clean filemap
+      assert(filemap[it->second.filename][it->second.block].vpset.find(pte) != filemap[it->second.filename][it->second.block].vpset.end());
       filemap[it->second.filename][it->second.block].vpset.erase(pte);
       if(it->second.infile){
         if(filemap[it->second.filename][it->second.block].vpset.empty())
