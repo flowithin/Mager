@@ -253,9 +253,10 @@ int vm_create(pid_t parent_pid, pid_t child_pid){
     numsw = it->second.numsw;
   }//if it not end
   //empty the arena (just a try)
-  for(size_t i = size; i < VM_ARENA_SIZE / VM_PAGESIZE; i++){
-    child_pt[i].ppage = child_pt[i].write_enable = child_pt[i].read_enable = 0;
-  }
+  // NOTE: this results in using too much memory(potentially)
+  /*for(size_t i = size; i < VM_ARENA_SIZE / VM_PAGESIZE; i++){*/
+  /*  child_pt[i].ppage = child_pt[i].write_enable = child_pt[i].read_enable = 0;*/
+  /*}*/
   eblcnt -= numsw;
   all_pt[child_pid] = Pt({size, numsw, child_pt});
   /*if(it != all_pt.end() && it->second.size != 0)*/
@@ -381,6 +382,7 @@ int cow(page_table_entry_t* pte, char* content){
   core[pte->ppage].insert(pte);
   //update ref and dirty and write read
   //update infile
+  //This is done in vm_map
   /*if (infile[pte].ftype == file_t::SWAP) {*/
     //swapfile
     /*swfile[infile[pte].block].erase(pte);*/
@@ -397,7 +399,7 @@ int cow(page_table_entry_t* pte, char* content){
 }
 
 bool is_cow(page_table_entry_t* pte){
-  //pte should exist in core and also im mem
+  //pte should exist in core and also in mem
   return (core.find(pte->ppage) != core.end() && core[pte->ppage].size() > 1 && infile[pte].ftype == file_t::SWAP && !infile[pte].infile) || pte->ppage == pinned;
 }
 int vm_fault(const void *addr, bool write_flag){
