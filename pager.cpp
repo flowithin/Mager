@@ -6,6 +6,7 @@
 #include <cstdio>
 #include <ctime>
 #include <iomanip>
+#include <memory>
 #include <unordered_map>
 #include <queue>
 #include <iostream>
@@ -19,7 +20,7 @@
 #include <string>
 #include <system_error>
 #include <unordered_set>
-#define LOG
+/*#define LOG*/
 
 struct PMB{bool ref, dirty;};
 struct Clock{
@@ -28,7 +29,7 @@ struct Clock{
 };
 struct Pt{
   uint32_t size, numsw;
-  page_table_entry_t* st;
+  std::unique_ptr<page_table_entry_t []> st;
 };
 enum class file_t{
   SWAP,
@@ -222,7 +223,7 @@ int vm_create(pid_t parent_pid, pid_t child_pid){
   {
     /*std::cout << "here\n";*/
     //parent_pid exists
-    page_table_entry_t* parent_pt = it->second.st;
+    page_table_entry_t* parent_pt = it->second.st.get();
     assert(!free_block.empty());
     if (it->second.numsw > free_block.size()) {
       return -1;
@@ -258,7 +259,7 @@ int vm_create(pid_t parent_pid, pid_t child_pid){
   /*  child_pt[i].ppage = child_pt[i].write_enable = child_pt[i].read_enable = 0;*/
   /*}*/
   eblcnt -= numsw;
-  all_pt[child_pid] = Pt({size, numsw, child_pt});
+  all_pt[child_pid] = Pt({size, numsw, std::unique_ptr<page_table_entry_t []>(child_pt)});
   /*if(it != all_pt.end() && it->second.size != 0)*/
   /*  assert(it->second.st[it->second.size-1].ppage == all_pt[child_pid].st[all_pt[child_pid].size - 1].ppage);*/
   return 0;
@@ -267,7 +268,7 @@ int vm_create(pid_t parent_pid, pid_t child_pid){
 void vm_switch(pid_t pid){
   curr_pid = pid;
   bound = all_pt[pid].size;
-  page_table_base_register = all_pt[pid].st;
+  page_table_base_register = all_pt[pid].st.get();
   /*std::cout<<"exited switch\n";*/
 }
 
@@ -299,6 +300,7 @@ int pm_evict(){
   assert(_it != infile.end());
   assert(free_block.size() < blcnt);
   const char* filename;
+
   if(_it->second.ftype == file_t::SWAP)
      filename = nullptr;
   else
@@ -343,7 +345,7 @@ int alloc(){
     free_ppage.pop();
     //want the clock to be aware of the new ppage
     for(size_t i = 0; i < pcnt - 1; i++){
-      if (clock_q.front() != ppage){
+      if (clock_q.front() != (size_t)ppage){
         clock_q.push(clock_q.front());
         /*psuff[clock_q.front()].ref = 0;*/
         /*if(core.find(clock_q.front()) != core.end()){*/
@@ -489,7 +491,7 @@ std::string vm_to_string(const char *filename){
   uint32_t i=0;
   std::string rs;
   while(1){
-    //trigger fault if not in  arena
+    //trigger fault if not in arena
     if(page_table_base_register[vpage].read_enable == 0 && vm_fault(VM_ARENA_BASEADDR + vpage * VM_PAGESIZE, 0) == -1)
       return "@FAULT";
     if (mem(filename + i) == '\0')
@@ -539,13 +541,13 @@ void* vm_map(const char *filename, unsigned int block){
         if(!is_infile){
           core[new_entry->ppage].insert(new_entry);
           //clock_q updating
-          for(size_t i = 0; i < pcnt - 1; i++){
-            if (clock_q.front() != new_entry->ppage){
-              clock_q.push(clock_q.front());
-            }
-            clock_q.pop();
-          }
-          clock_q.push(new_entry->ppage);
+          /*for(size_t i = 0; i < pcnt - 1; i++){*/
+          /*  if (clock_q.front() != new_entry->ppage){*/
+          /*    clock_q.push(clock_q.front());*/
+          /*  }*/
+          /*  clock_q.pop();*/
+          /*}*/
+          /*clock_q.push(new_entry->ppage);*/
         }
         //filemap update
         _it->second.vpset.insert(new_entry);
@@ -641,7 +643,8 @@ void vm_destroy(){
   print_map(ghost);
  
   //free page table
-  delete[] all_pt[curr_pid].st;
+  all_pt[curr_pid].st.reset();
+  
   all_pt.erase(curr_pid);
   myPrint("free_block: ", "");
   print_queue(free_block);
