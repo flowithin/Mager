@@ -73,7 +73,6 @@ std::ostream& operator<<(std::ostream& os, const Infile& inf){
       {
         os << "ftype: FILE_B\n";
         break;
-
       }
   }
   if(inf.infile)
@@ -204,12 +203,12 @@ void vm_init(unsigned int memory_pages, unsigned int swap_blocks){
   pinned = 0;//may not be valid
   //pinned page init to zeros
   p2p(0, nullptr);
-  for(uint32_t i = 1; i < memory_pages; i ++){
+  for(uint32_t i = 1; i < memory_pages; i++){
     clock_q.push(i);
     free_ppage.push(i);
     psuff[i].ref = psuff[i].dirty = 0;
   }
-  for(uint32_t i = 0; i < swap_blocks; i ++){
+  for(uint32_t i = 0; i < swap_blocks; i++){
     free_block.push(i);
   }
 }
@@ -218,13 +217,14 @@ int vm_create(pid_t parent_pid, pid_t child_pid){
   auto it = all_pt.find(parent_pid);
   uint32_t size = 0;
   uint32_t numsw = 0;
-  page_table_entry_t* child_pt = new page_table_entry_t[VM_ARENA_SIZE]; 
+  page_table_entry_t* child_pt = new page_table_entry_t[VM_ARENA_SIZE/VM_PAGESIZE]; 
   if(it != all_pt.end())
   {
     /*std::cout << "here\n";*/
     //parent_pid exists
     page_table_entry_t* parent_pt = it->second.st.get();
-    assert(!free_block.empty());
+    // NOTE: no free block fine
+    /*assert(!free_block.empty());*/
     if (it->second.numsw > free_block.size()) {
       return -1;
     }
@@ -254,10 +254,9 @@ int vm_create(pid_t parent_pid, pid_t child_pid){
     numsw = it->second.numsw;
   }//if it not end
   //empty the arena (just a try)
-  // NOTE: this results in using too much memory(potentially)
-  /*for(size_t i = size; i < VM_ARENA_SIZE / VM_PAGESIZE; i++){*/
-  /*  child_pt[i].ppage = child_pt[i].write_enable = child_pt[i].read_enable = 0;*/
-  /*}*/
+  for(size_t i = size; i < VM_ARENA_SIZE / VM_PAGESIZE; i++){
+    child_pt[i].ppage = child_pt[i].write_enable = child_pt[i].read_enable = 0;
+  }
   eblcnt -= numsw;
   all_pt[child_pid] = Pt({size, numsw, std::unique_ptr<page_table_entry_t []>(child_pt)});
   /*if(it != all_pt.end() && it->second.size != 0)*/
@@ -269,6 +268,9 @@ void vm_switch(pid_t pid){
   curr_pid = pid;
   bound = all_pt[pid].size;
   page_table_base_register = all_pt[pid].st.get();
+  /*for(int i =0 ; i < bound; i ++ ){*/
+  /*  std::cout << std::hex << (uint32_t)page_table_base_register[i].ppage << '\n';*/
+  /*}*/
   /*std::cout<<"exited switch\n";*/
 }
 
@@ -298,7 +300,7 @@ int pm_evict(){
   myPrint("pte = ", pte);
   auto _it = infile.find(pte);
   assert(_it != infile.end());
-  assert(free_block.size() < blcnt);
+  assert(free_block.size() <= blcnt);
   const char* filename;
 
   if(_it->second.ftype == file_t::SWAP)
@@ -347,12 +349,6 @@ int alloc(){
     for(size_t i = 0; i < pcnt - 1; i++){
       if (clock_q.front() != (size_t)ppage){
         clock_q.push(clock_q.front());
-        /*psuff[clock_q.front()].ref = 0;*/
-        /*if(core.find(clock_q.front()) != core.end()){*/
-        /*  for(auto pte : core[clock_q.front()]){*/
-        /*    pte->read_enable = pte->write_enable = 0;*/
-        /*  }*/
-        /*}*/
       }
       clock_q.pop();
     }
@@ -396,7 +392,6 @@ int cow(page_table_entry_t* pte, char* content){
   //dirty bit = 1
   psuff[pte->ppage].dirty = 1;
   pte->write_enable = 1;
-
   return 0;
 }
 
@@ -501,11 +496,10 @@ std::string vm_to_string(const char *filename){
     vpage = a2p(filename + i);
   }
   /*myPrint("vm_to_string", "");*/
-
   return rs;
 }
 void* vm_map(const char *filename, unsigned int block){
-  if(filename == nullptr && free_block.empty()){
+  if((filename == nullptr && free_block.empty()) || bound == VM_ARENA_SIZE/VM_PAGESIZE){
     //swap file backed
       /*std::cerr << "free_block is empty\n";*/
       return nullptr;
@@ -540,15 +534,7 @@ void* vm_map(const char *filename, unsigned int block){
         //update core only if in mem
         if(!is_infile){
           core[new_entry->ppage].insert(new_entry);
-          //clock_q updating
-          /*for(size_t i = 0; i < pcnt - 1; i++){*/
-          /*  if (clock_q.front() != new_entry->ppage){*/
-          /*    clock_q.push(clock_q.front());*/
-          /*  }*/
-          /*  clock_q.pop();*/
-          /*}*/
-          /*clock_q.push(new_entry->ppage);*/
-        }
+       }
         //filemap update
         _it->second.vpset.insert(new_entry);
       } else goto notmatched;
@@ -563,6 +549,7 @@ void* vm_map(const char *filename, unsigned int block){
     infile[new_entry] = {file_t::SWAP, false, free_block.front(), "@SWAP"};
     swfile[free_block.front()].insert(new_entry);
     free_block.pop(); 
+    all_pt[curr_pid].numsw++;
     eblcnt--;
     *new_entry = {.ppage = pinned, .read_enable = 1, .write_enable = 0 };
     core[new_entry->ppage].insert(new_entry);
@@ -622,6 +609,12 @@ void vm_discard(page_table_entry_t* pte){
   infile.erase(pte);
 }
 
+void rehash_all(){
+  infile.rehash(0);
+  filemap.rehash(0);
+  swfile.rehash(0);
+  core.rehash(0);
+}
 void vm_destroy(){
   myPrint("infile size: ", infile.size());
   print_map(infile);
@@ -641,11 +634,10 @@ void vm_destroy(){
   print_map(filemap);
   myPrint("ghost: ","");
   print_map(ghost);
- 
   //free page table
   all_pt[curr_pid].st.reset();
-  
   all_pt.erase(curr_pid);
+  /*rehash_all();*/
   myPrint("free_block: ", "");
   print_queue(free_block);
   myPrint("eblcnt: ", eblcnt);

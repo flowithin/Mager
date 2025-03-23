@@ -1,0 +1,892 @@
+desc: --time-unit=B
+cmd: ./pager
+time_unit: B
+#-----------
+snapshot=0
+#-----------
+time=0
+mem_heap_B=0
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=1
+#-----------
+time=73736
+mem_heap_B=73728
+mem_heap_extra_B=8
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=2
+#-----------
+time=77200
+mem_heap_B=76063
+mem_heap_extra_B=81
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=3
+#-----------
+time=16858456
+mem_heap_B=16853279
+mem_heap_extra_B=4121
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=4
+#-----------
+time=16858536
+mem_heap_B=16853341
+mem_heap_extra_B=4139
+mem_stacks_B=0
+heap_tree=peak
+n2: 16853341 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n1: 16777216 0x125DC9: swap_init(unsigned int) (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+  n1: 16777216 0x127175: ??? (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+   n0: 16777216 0x1285BE: main (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+ n0: 76125 in 7 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=5
+#-----------
+time=16878504
+mem_heap_B=16859840
+mem_heap_extra_B=4488
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=6
+#-----------
+time=16891856
+mem_heap_B=16860448
+mem_heap_extra_B=4608
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=7
+#-----------
+time=16912600
+mem_heap_B=16863080
+mem_heap_extra_B=4880
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=8
+#-----------
+time=16926600
+mem_heap_B=16862344
+mem_heap_extra_B=4800
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=9
+#-----------
+time=16945832
+mem_heap_B=16863560
+mem_heap_extra_B=5008
+mem_stacks_B=0
+heap_tree=detailed
+n2: 16863560 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n1: 16777216 0x125DC9: swap_init(unsigned int) (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+  n1: 16777216 0x127175: ??? (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+   n0: 16777216 0x1285BE: main (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+ n0: 86344 in 17 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=10
+#-----------
+time=16968600
+mem_heap_B=16863480
+mem_heap_extra_B=4976
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=11
+#-----------
+time=16982832
+mem_heap_B=16864480
+mem_heap_extra_B=5200
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=12
+#-----------
+time=16999168
+mem_heap_B=16864976
+mem_heap_extra_B=5184
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=13
+#-----------
+time=17023112
+mem_heap_B=16864431
+mem_heap_extra_B=5177
+mem_stacks_B=0
+heap_tree=detailed
+n2: 16864431 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n1: 16777216 0x125DC9: swap_init(unsigned int) (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+  n1: 16777216 0x127175: ??? (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+   n0: 16777216 0x1285BE: main (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+ n0: 87215 in 17 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=14
+#-----------
+time=17043320
+mem_heap_B=16864360
+mem_heap_extra_B=5152
+mem_stacks_B=0
+heap_tree=detailed
+n2: 16864360 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n1: 16777216 0x125DC9: swap_init(unsigned int) (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+  n1: 16777216 0x127175: ??? (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+   n0: 16777216 0x1285BE: main (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+ n0: 87144 in 17 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=15
+#-----------
+time=17053880
+mem_heap_B=16864360
+mem_heap_extra_B=5152
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=16
+#-----------
+time=17071704
+mem_heap_B=16864360
+mem_heap_extra_B=5152
+mem_stacks_B=0
+heap_tree=detailed
+n2: 16864360 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n1: 16777216 0x125DC9: swap_init(unsigned int) (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+  n1: 16777216 0x127175: ??? (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+   n0: 16777216 0x1285BE: main (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+ n0: 87144 in 17 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=17
+#-----------
+time=17095016
+mem_heap_B=16864360
+mem_heap_extra_B=5152
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=18
+#-----------
+time=17106760
+mem_heap_B=16864360
+mem_heap_extra_B=5152
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=19
+#-----------
+time=17120520
+mem_heap_B=16864808
+mem_heap_extra_B=5152
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=20
+#-----------
+time=17138648
+mem_heap_B=16864360
+mem_heap_extra_B=5152
+mem_stacks_B=0
+heap_tree=detailed
+n2: 16864360 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n1: 16777216 0x125DC9: swap_init(unsigned int) (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+  n1: 16777216 0x127175: ??? (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+   n0: 16777216 0x1285BE: main (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+ n0: 87144 in 17 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=21
+#-----------
+time=17154008
+mem_heap_B=16864431
+mem_heap_extra_B=5177
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=22
+#-----------
+time=17168120
+mem_heap_B=16864431
+mem_heap_extra_B=5177
+mem_stacks_B=0
+heap_tree=detailed
+n2: 16864431 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n1: 16777216 0x125DC9: swap_init(unsigned int) (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+  n1: 16777216 0x127175: ??? (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+   n0: 16777216 0x1285BE: main (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+ n0: 87215 in 17 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=23
+#-----------
+time=17186360
+mem_heap_B=16864431
+mem_heap_extra_B=5177
+mem_stacks_B=0
+heap_tree=detailed
+n2: 16864431 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n1: 16777216 0x125DC9: swap_init(unsigned int) (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+  n1: 16777216 0x127175: ??? (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+   n0: 16777216 0x1285BE: main (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+ n0: 87215 in 17 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=24
+#-----------
+time=17206504
+mem_heap_B=16864360
+mem_heap_extra_B=5152
+mem_stacks_B=0
+heap_tree=detailed
+n2: 16864360 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n1: 16777216 0x125DC9: swap_init(unsigned int) (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+  n1: 16777216 0x127175: ??? (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+   n0: 16777216 0x1285BE: main (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+ n0: 87144 in 17 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=25
+#-----------
+time=17224888
+mem_heap_B=16864431
+mem_heap_extra_B=5177
+mem_stacks_B=0
+heap_tree=detailed
+n2: 16864431 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n1: 16777216 0x125DC9: swap_init(unsigned int) (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+  n1: 16777216 0x127175: ??? (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+   n0: 16777216 0x1285BE: main (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+ n0: 87215 in 17 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=26
+#-----------
+time=17243128
+mem_heap_B=16864431
+mem_heap_extra_B=5177
+mem_stacks_B=0
+heap_tree=detailed
+n2: 16864431 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n1: 16777216 0x125DC9: swap_init(unsigned int) (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+  n1: 16777216 0x127175: ??? (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+   n0: 16777216 0x1285BE: main (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+ n0: 87215 in 17 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=27
+#-----------
+time=17263384
+mem_heap_B=16864456
+mem_heap_extra_B=5184
+mem_stacks_B=0
+heap_tree=detailed
+n2: 16864456 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n1: 16777216 0x125DC9: swap_init(unsigned int) (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+  n1: 16777216 0x127175: ??? (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+   n0: 16777216 0x1285BE: main (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+ n0: 87240 in 17 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=28
+#-----------
+time=17281656
+mem_heap_B=16864431
+mem_heap_extra_B=5177
+mem_stacks_B=0
+heap_tree=detailed
+n2: 16864431 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n1: 16777216 0x125DC9: swap_init(unsigned int) (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+  n1: 16777216 0x127175: ??? (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+   n0: 16777216 0x1285BE: main (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+ n0: 87215 in 17 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=29
+#-----------
+time=17301800
+mem_heap_B=16864360
+mem_heap_extra_B=5152
+mem_stacks_B=0
+heap_tree=detailed
+n2: 16864360 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n1: 16777216 0x125DC9: swap_init(unsigned int) (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+  n1: 16777216 0x127175: ??? (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+   n0: 16777216 0x1285BE: main (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+ n0: 87144 in 17 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=30
+#-----------
+time=17320184
+mem_heap_B=16864431
+mem_heap_extra_B=5177
+mem_stacks_B=0
+heap_tree=detailed
+n2: 16864431 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n1: 16777216 0x125DC9: swap_init(unsigned int) (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+  n1: 16777216 0x127175: ??? (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+   n0: 16777216 0x1285BE: main (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+ n0: 87215 in 17 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=31
+#-----------
+time=17330328
+mem_heap_B=16864431
+mem_heap_extra_B=5177
+mem_stacks_B=0
+heap_tree=detailed
+n2: 16864431 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n1: 16777216 0x125DC9: swap_init(unsigned int) (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+  n1: 16777216 0x127175: ??? (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+   n0: 16777216 0x1285BE: main (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+ n0: 87215 in 17 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=32
+#-----------
+time=17349088
+mem_heap_B=16864943
+mem_heap_extra_B=5185
+mem_stacks_B=0
+heap_tree=detailed
+n2: 16864943 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n1: 16777216 0x125DC9: swap_init(unsigned int) (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+  n1: 16777216 0x127175: ??? (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+   n0: 16777216 0x1285BE: main (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+ n0: 87727 in 17 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=33
+#-----------
+time=17359752
+mem_heap_B=16864431
+mem_heap_extra_B=5177
+mem_stacks_B=0
+heap_tree=detailed
+n2: 16864431 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n1: 16777216 0x125DC9: swap_init(unsigned int) (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+  n1: 16777216 0x127175: ??? (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+   n0: 16777216 0x1285BE: main (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+ n0: 87215 in 17 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=34
+#-----------
+time=17379016
+mem_heap_B=16864360
+mem_heap_extra_B=5152
+mem_stacks_B=0
+heap_tree=detailed
+n2: 16864360 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n1: 16777216 0x125DC9: swap_init(unsigned int) (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+  n1: 16777216 0x127175: ??? (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+   n0: 16777216 0x1285BE: main (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+ n0: 87144 in 17 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=35
+#-----------
+time=17398200
+mem_heap_B=16864360
+mem_heap_extra_B=5152
+mem_stacks_B=0
+heap_tree=detailed
+n2: 16864360 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n1: 16777216 0x125DC9: swap_init(unsigned int) (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+  n1: 16777216 0x127175: ??? (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+   n0: 16777216 0x1285BE: main (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+ n0: 87144 in 17 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=36
+#-----------
+time=17416520
+mem_heap_B=16864431
+mem_heap_extra_B=5177
+mem_stacks_B=0
+heap_tree=detailed
+n2: 16864431 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n1: 16777216 0x125DC9: swap_init(unsigned int) (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+  n1: 16777216 0x127175: ??? (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+   n0: 16777216 0x1285BE: main (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+ n0: 87215 in 17 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=37
+#-----------
+time=17426664
+mem_heap_B=16864431
+mem_heap_extra_B=5177
+mem_stacks_B=0
+heap_tree=detailed
+n2: 16864431 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n1: 16777216 0x125DC9: swap_init(unsigned int) (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+  n1: 16777216 0x127175: ??? (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+   n0: 16777216 0x1285BE: main (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+ n0: 87215 in 17 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=38
+#-----------
+time=17444936
+mem_heap_B=16864464
+mem_heap_extra_B=5176
+mem_stacks_B=0
+heap_tree=detailed
+n2: 16864464 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n1: 16777216 0x125DC9: swap_init(unsigned int) (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+  n1: 16777216 0x127175: ??? (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+   n0: 16777216 0x1285BE: main (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+ n0: 87248 in 17 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=39
+#-----------
+time=17455048
+mem_heap_B=16864431
+mem_heap_extra_B=5177
+mem_stacks_B=0
+heap_tree=detailed
+n2: 16864431 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n1: 16777216 0x125DC9: swap_init(unsigned int) (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+  n1: 16777216 0x127175: ??? (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+   n0: 16777216 0x1285BE: main (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+ n0: 87215 in 17 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=40
+#-----------
+time=17473320
+mem_heap_B=16864464
+mem_heap_extra_B=5176
+mem_stacks_B=0
+heap_tree=detailed
+n2: 16864464 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n1: 16777216 0x125DC9: swap_init(unsigned int) (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+  n1: 16777216 0x127175: ??? (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+   n0: 16777216 0x1285BE: main (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+ n0: 87248 in 17 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=41
+#-----------
+time=17483464
+mem_heap_B=16864464
+mem_heap_extra_B=5176
+mem_stacks_B=0
+heap_tree=detailed
+n2: 16864464 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n1: 16777216 0x125DC9: swap_init(unsigned int) (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+  n1: 16777216 0x127175: ??? (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+   n0: 16777216 0x1285BE: main (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+ n0: 87248 in 17 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=42
+#-----------
+time=17502632
+mem_heap_B=16864360
+mem_heap_extra_B=5152
+mem_stacks_B=0
+heap_tree=detailed
+n2: 16864360 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n1: 16777216 0x125DC9: swap_init(unsigned int) (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+  n1: 16777216 0x127175: ??? (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+   n0: 16777216 0x1285BE: main (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+ n0: 87144 in 17 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=43
+#-----------
+time=17521960
+mem_heap_B=16864431
+mem_heap_extra_B=5177
+mem_stacks_B=0
+heap_tree=detailed
+n2: 16864431 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n1: 16777216 0x125DC9: swap_init(unsigned int) (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+  n1: 16777216 0x127175: ??? (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+   n0: 16777216 0x1285BE: main (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+ n0: 87215 in 17 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=44
+#-----------
+time=17541664
+mem_heap_B=16864872
+mem_heap_extra_B=5160
+mem_stacks_B=0
+heap_tree=detailed
+n2: 16864872 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n1: 16777216 0x125DC9: swap_init(unsigned int) (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+  n1: 16777216 0x127175: ??? (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+   n0: 16777216 0x1285BE: main (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+ n0: 87656 in 17 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=45
+#-----------
+time=17560488
+mem_heap_B=16864431
+mem_heap_extra_B=5177
+mem_stacks_B=0
+heap_tree=detailed
+n2: 16864431 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n1: 16777216 0x125DC9: swap_init(unsigned int) (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+  n1: 16777216 0x127175: ??? (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+   n0: 16777216 0x1285BE: main (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+ n0: 87215 in 17 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=46
+#-----------
+time=17579768
+mem_heap_B=16864431
+mem_heap_extra_B=5177
+mem_stacks_B=0
+heap_tree=detailed
+n2: 16864431 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n1: 16777216 0x125DC9: swap_init(unsigned int) (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+  n1: 16777216 0x127175: ??? (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+   n0: 16777216 0x1285BE: main (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+ n0: 87215 in 17 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=47
+#-----------
+time=17598184
+mem_heap_B=16864024
+mem_heap_extra_B=5088
+mem_stacks_B=0
+heap_tree=detailed
+n2: 16864024 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n1: 16777216 0x125DC9: swap_init(unsigned int) (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+  n1: 16777216 0x127175: ??? (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+   n0: 16777216 0x1285BE: main (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+ n0: 86808 in 17 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=48
+#-----------
+time=17619568
+mem_heap_B=16862455
+mem_heap_extra_B=4969
+mem_stacks_B=0
+heap_tree=detailed
+n2: 16862455 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n1: 16777216 0x125DC9: swap_init(unsigned int) (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+  n1: 16777216 0x127175: ??? (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+   n0: 16777216 0x1285BE: main (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+ n0: 85239 in 17 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=49
+#-----------
+time=17629536
+mem_heap_B=16859088
+mem_heap_extra_B=4576
+mem_stacks_B=0
+heap_tree=detailed
+n2: 16859088 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n1: 16777216 0x125DC9: swap_init(unsigned int) (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+  n1: 16777216 0x127175: ??? (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+   n0: 16777216 0x1285BE: main (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+ n0: 81872 in 17 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=50
+#-----------
+time=17630056
+mem_heap_B=16858576
+mem_heap_extra_B=4568
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=51
+#-----------
+time=17630168
+mem_heap_B=16858543
+mem_heap_extra_B=4569
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=52
+#-----------
+time=17630248
+mem_heap_B=16858543
+mem_heap_extra_B=4569
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=53
+#-----------
+time=17630328
+mem_heap_B=16858543
+mem_heap_extra_B=4569
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=54
+#-----------
+time=17630424
+mem_heap_B=16858472
+mem_heap_extra_B=4544
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=55
+#-----------
+time=17630504
+mem_heap_B=16858472
+mem_heap_extra_B=4544
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=56
+#-----------
+time=17630584
+mem_heap_B=16858472
+mem_heap_extra_B=4544
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=57
+#-----------
+time=17630664
+mem_heap_B=16858472
+mem_heap_extra_B=4544
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=58
+#-----------
+time=17630744
+mem_heap_B=16858472
+mem_heap_extra_B=4544
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=59
+#-----------
+time=17630824
+mem_heap_B=16858472
+mem_heap_extra_B=4544
+mem_stacks_B=0
+heap_tree=detailed
+n2: 16858472 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n1: 16777216 0x125DC9: swap_init(unsigned int) (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+  n1: 16777216 0x127175: ??? (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+   n0: 16777216 0x1285BE: main (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+ n0: 81256 in 17 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=60
+#-----------
+time=17630904
+mem_heap_B=16858472
+mem_heap_extra_B=4544
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=61
+#-----------
+time=17630984
+mem_heap_B=16858472
+mem_heap_extra_B=4544
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=62
+#-----------
+time=17631064
+mem_heap_B=16858472
+mem_heap_extra_B=4544
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=63
+#-----------
+time=17631144
+mem_heap_B=16858472
+mem_heap_extra_B=4544
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=64
+#-----------
+time=17631272
+mem_heap_B=16858368
+mem_heap_extra_B=4520
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=65
+#-----------
+time=17631400
+mem_heap_B=16858264
+mem_heap_extra_B=4496
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=66
+#-----------
+time=17631528
+mem_heap_B=16858160
+mem_heap_extra_B=4472
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=67
+#-----------
+time=17631672
+mem_heap_B=16858032
+mem_heap_extra_B=4456
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=68
+#-----------
+time=17631800
+mem_heap_B=16857928
+mem_heap_extra_B=4432
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=69
+#-----------
+time=17631928
+mem_heap_B=16857824
+mem_heap_extra_B=4408
+mem_stacks_B=0
+heap_tree=detailed
+n2: 16857824 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n1: 16777216 0x125DC9: swap_init(unsigned int) (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+  n1: 16777216 0x127175: ??? (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+   n0: 16777216 0x1285BE: main (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+ n0: 80608 in 17 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=70
+#-----------
+time=17632056
+mem_heap_B=16857720
+mem_heap_extra_B=4384
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=71
+#-----------
+time=17632184
+mem_heap_B=16857616
+mem_heap_extra_B=4360
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=72
+#-----------
+time=17632328
+mem_heap_B=16857488
+mem_heap_extra_B=4344
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=73
+#-----------
+time=17632456
+mem_heap_B=16857384
+mem_heap_extra_B=4320
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=74
+#-----------
+time=17632584
+mem_heap_B=16857280
+mem_heap_extra_B=4296
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=75
+#-----------
+time=17632696
+mem_heap_B=16857237
+mem_heap_extra_B=4307
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=76
+#-----------
+time=17633768
+mem_heap_B=16856192
+mem_heap_extra_B=4280
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=77
+#-----------
+time=17633896
+mem_heap_B=16856224
+mem_heap_extra_B=4264
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=78
+#-----------
+time=17634416
+mem_heap_B=16856736
+mem_heap_extra_B=4272
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=79
+#-----------
+time=17634936
+mem_heap_B=16857248
+mem_heap_extra_B=4280
+mem_stacks_B=0
+heap_tree=detailed
+n2: 16857248 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n1: 16777216 0x125DC9: swap_init(unsigned int) (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+  n1: 16777216 0x127175: ??? (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+   n0: 16777216 0x1285BE: main (in /home/jtwuuuuu/UM/EECS482/jtwuuuuu.liuym.3/pager)
+ n0: 80032 in 17 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=80
+#-----------
+time=17635456
+mem_heap_B=16857760
+mem_heap_extra_B=4288
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=81
+#-----------
+time=17635976
+mem_heap_B=16857248
+mem_heap_extra_B=4280
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=82
+#-----------
+time=17636496
+mem_heap_B=16856736
+mem_heap_extra_B=4272
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=83
+#-----------
+time=17637016
+mem_heap_B=16856224
+mem_heap_extra_B=4264
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=84
+#-----------
+time=17637128
+mem_heap_B=16856191
+mem_heap_extra_B=4265
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=85
+#-----------
+time=17637208
+mem_heap_B=16856191
+mem_heap_extra_B=4265
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=86
+#-----------
+time=17637288
+mem_heap_B=16856191
+mem_heap_extra_B=4265
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=87
+#-----------
+time=17637384
+mem_heap_B=16856120
+mem_heap_extra_B=4240
+mem_stacks_B=0
+heap_tree=empty

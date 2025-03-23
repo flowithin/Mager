@@ -23,7 +23,7 @@ int main() {
     //1.cow 
     //2. bring back from page evict filename2
     strcpy(filename1, "papers.txt");
-     //1.cow 
+    //1.cow 
     //2. bring back from page evict filename3
     strcpy(filename2, "papers.txt");
     //1.cow 
