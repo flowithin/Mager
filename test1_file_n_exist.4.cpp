@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cstring>
+#include <sched.h>
 #include <unistd.h>
 #include "vm_app.h"
 #include "vm_arena.h"
@@ -8,6 +9,7 @@ using std::cout;
 
 int main() {
   /* Allocate swap-backed page from the arena */
+  pid_t pid = fork();
   char* filename = static_cast<char *>(vm_map(nullptr, 0));
 
   /* Write the name of the file that will be mapped */
@@ -25,6 +27,23 @@ int main() {
     cout << p[i];
     //write fault
     p[i] ++;
+  }
+  if(pid == 0){
+  char* filename = static_cast<char *>(vm_map(nullptr, 0));
+  char* filename1 = static_cast<char *>(vm_map(nullptr, 0));
+  char* filename2 = static_cast<char *>(vm_map(nullptr, 0));
+  char* filename3 = static_cast<char *>(vm_map(nullptr, 0));
+ /* Write the name of the file that will be mapped */
+
+  strcpy(filename, "papers.txt");
+  //evicting
+  strcpy(filename1, "papers.txt");
+  char* p = static_cast<char *>(vm_map (filename, 0));
+  strcpy(filename2, "papers.txt");
+  std::cout <<p[0];
+  //p becomes ghost page
+
+
   }
 
 }

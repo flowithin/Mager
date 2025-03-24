@@ -21,6 +21,7 @@
 #include <system_error>
 #include <unordered_set>
 /*#define LOG*/
+#define LOG2
 
 struct PMB{bool ref, dirty;};
 struct Clock{
@@ -268,10 +269,6 @@ void vm_switch(pid_t pid){
   curr_pid = pid;
   bound = all_pt[pid].size;
   page_table_base_register = all_pt[pid].st.get();
-  /*for(int i =0 ; i < bound; i ++ ){*/
-  /*  std::cout << std::hex << (uint32_t)page_table_base_register[i].ppage << '\n';*/
-  /*}*/
-  /*std::cout<<"exited switch\n";*/
 }
 
 
@@ -292,6 +289,7 @@ int pm_evict(){
     return ppage;
   }
   myPrint("core: ", "");
+  myPrint("ppage (evict): ", ppage);
   print_map(core);
   assert(core.find(ppage) != core.end());
   //randomly choose one to see if they are in file
@@ -381,17 +379,9 @@ int cow(page_table_entry_t* pte, char* content){
   //update ref and dirty and write read
   //update infile
   //This is done in vm_map
-  /*if (infile[pte].ftype == file_t::SWAP) {*/
-    //swapfile
-    /*swfile[infile[pte].block].erase(pte);*/
-    /*swfile[infile[pte].block].insert(pte);*/
-    //give a new swap block
-    /*infile[pte].block = free_block.front();*/
-    /*free_block.pop();*/
-  /*}*/
   //dirty bit = 1
   psuff[pte->ppage].dirty = 1;
-  pte->write_enable = 1;
+  pte->read_enable = pte->write_enable = 1;
   return 0;
 }
 
@@ -418,8 +408,6 @@ int vm_fault(const void *addr, bool write_flag){
     void* eaddr =static_cast<char*>(vm_physmem) + epage * VM_PAGESIZE;
     myPrint("epage: ", epage);
     /*std::cout << "vpage 1: " << (*core[1].begin())->read_enable << (*core[1].begin())->write_enable << '\n';*/
-    if(file_read(it->second.ftype == file_t::FILE_B ? it->second.filename.c_str() : nullptr, it->second.block, eaddr) == -1)
-      return -1;
     //others lifted 
     auto& lifted = (it->second.ftype == file_t::SWAP)
       ? swfile[it->second.block]
@@ -433,6 +421,8 @@ int vm_fault(const void *addr, bool write_flag){
       //core map insert
       core[epage].insert(l);
     }
+    if(file_read(it->second.ftype == file_t::FILE_B ? it->second.filename.c_str() : nullptr, it->second.block, eaddr) == -1)
+      return -1;
     if(it->second.ftype == file_t::FILE_B)
       filemap[it->second.filename][it->second.block].ppage = epage;
   }//if infile
@@ -449,6 +439,7 @@ int vm_fault(const void *addr, bool write_flag){
       }
     }
   }//except for pinned page
+  assert(pte->read_enable == 1);
   bool _is_cow = is_cow(pte);
   if (write_flag)
   {
@@ -460,10 +451,13 @@ int vm_fault(const void *addr, bool write_flag){
       assert(it_psuff != psuff.end());//shouldn't be pinned page
       it_psuff->second.dirty = 1;
       //pte->ppage should be updated by now
+      assert(pte->read_enable == 1);
       for(auto p : core[pte->ppage]){
-        p->write_enable = 1;
+        p->read_enable = p->write_enable = 1;
+        assert(pte->read_enable == 1);
       }
     }
+  assert(pte->read_enable == 1);
   }
   myPrint("core map: ", "");
   print_map(core);
@@ -500,8 +494,6 @@ std::string vm_to_string(const char *filename){
 }
 void* vm_map(const char *filename, unsigned int block){
   if((filename == nullptr && free_block.empty()) || bound == VM_ARENA_SIZE/VM_PAGESIZE){
-    //swap file backed
-      /*std::cerr << "free_block is empty\n";*/
       return nullptr;
   }
   page_table_entry_t* new_entry = page_table_base_register + all_pt[curr_pid].size;
@@ -640,6 +632,14 @@ void vm_destroy(){
   /*rehash_all();*/
   myPrint("free_block: ", "");
   print_queue(free_block);
+  myPrint("free_ppage: ", "");
+  print_queue(free_ppage);
+ 
   myPrint("eblcnt: ", eblcnt);
+  #ifndef LOG2
+  if(all_pt.empty())
+    std::cout << "--------------------------finished-----------------------------\n"
+    std::cout << "--------------------------hahahaha-----------------------------\n"
+  #endif
 }
 

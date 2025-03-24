@@ -33,7 +33,7 @@ int main() {
   strcpy(filename2, "papers.txt");
   /*strcpy(filename1, "papers.txt");*/
   //all ppage has been written to (swap)
-  pid = fork();
+  /*pid = fork();*/
   /* Map a page from the specified file */
   p = static_cast<char *>(vm_map (filename, 0));
   char* p1 = static_cast<char *>(vm_map (filename1, 0));
@@ -48,7 +48,6 @@ int main() {
     //write fault
     p[i] ++;
   }
-  pid = fork();
   strcpy(filename1, "papers.txt");
   strcpy(filename2, "papers.txt");
   //now should be infile rw=0
@@ -67,7 +66,7 @@ int main() {
     cout << p3[i];
     p3[i] ++;
   }
- pid = fork();
+ /*pid = fork();*/
   cout << '\n';
   for (unsigned int i=0; i<10; i++) {
     cout << p4[i];
