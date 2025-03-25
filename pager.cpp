@@ -21,7 +21,7 @@
 #include <system_error>
 #include <unordered_set>
 /*#define LOG*/
-#define LOG2
+/*#define LOG2*/
 
 struct PMB{bool ref, dirty;};
 struct Clock{
@@ -251,7 +251,7 @@ int vm_create(pid_t parent_pid, pid_t child_pid){
         free_block.pop();
         eblcnt--;
       }
-    }
+   }
     numsw = it->second.numsw;
   }//if it not end
   //empty the arena (just a try)
@@ -408,6 +408,11 @@ int vm_fault(const void *addr, bool write_flag){
     void* eaddr =static_cast<char*>(vm_physmem) + epage * VM_PAGESIZE;
     myPrint("epage: ", epage);
     /*std::cout << "vpage 1: " << (*core[1].begin())->read_enable << (*core[1].begin())->write_enable << '\n';*/
+    if(file_read(it->second.ftype == file_t::FILE_B ? it->second.filename.c_str() : nullptr, it->second.block, eaddr) == -1)
+    {
+      free_ppage.push(epage);
+      return -1;
+    }
     //others lifted 
     auto& lifted = (it->second.ftype == file_t::SWAP)
       ? swfile[it->second.block]
@@ -421,8 +426,6 @@ int vm_fault(const void *addr, bool write_flag){
       //core map insert
       core[epage].insert(l);
     }
-    if(file_read(it->second.ftype == file_t::FILE_B ? it->second.filename.c_str() : nullptr, it->second.block, eaddr) == -1)
-      return -1;
     if(it->second.ftype == file_t::FILE_B)
       filemap[it->second.filename][it->second.block].ppage = epage;
   }//if infile
@@ -439,7 +442,6 @@ int vm_fault(const void *addr, bool write_flag){
       }
     }
   }//except for pinned page
-  assert(pte->read_enable == 1);
   bool _is_cow = is_cow(pte);
   if (write_flag)
   {
@@ -451,13 +453,10 @@ int vm_fault(const void *addr, bool write_flag){
       assert(it_psuff != psuff.end());//shouldn't be pinned page
       it_psuff->second.dirty = 1;
       //pte->ppage should be updated by now
-      assert(pte->read_enable == 1);
       for(auto p : core[pte->ppage]){
         p->read_enable = p->write_enable = 1;
-        assert(pte->read_enable == 1);
       }
     }
-  assert(pte->read_enable == 1);
   }
   myPrint("core map: ", "");
   print_map(core);
@@ -636,10 +635,10 @@ void vm_destroy(){
   print_queue(free_ppage);
  
   myPrint("eblcnt: ", eblcnt);
-  #ifndef LOG2
+  #ifdef LOG2
   if(all_pt.empty())
-    std::cout << "--------------------------finished-----------------------------\n"
-    std::cout << "--------------------------hahahaha-----------------------------\n"
+    std::cout << "--------------------------finished-----------------------------\n";
+  std::cout << "-------------------------------------------------------\n";
   #endif
 }
 
