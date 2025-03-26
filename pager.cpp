@@ -516,7 +516,7 @@ void* vm_map(const char *filename, unsigned int block){
           // to set ref
           new_entry->read_enable = psuff[_it->second.ppage].ref;
           new_entry->write_enable = psuff[_it->second.ppage].ref & psuff[_it->second.ppage].dirty;
-        } else{
+        } else {
           *new_entry = **_it->second.vpset.begin();
         }
         //ghost -> not infile
