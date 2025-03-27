@@ -119,6 +119,10 @@ std::ostream& operator<<(std::ostream& os, const std::pair<k, t> p){
   std::cout << "("<< p.first << ", " << p.second << ")";
   return os;
 }
+std::ostream& operator<<(std::ostream& os, const PMB pmb){
+  std::cout << "("<< pmb.ref << ", " << pmb.dirty << ")";
+  return os;
+}
 template <typename k, typename t>
 void print_map(const std::unordered_map<k, t>& map){
   #ifdef LOG
@@ -221,11 +225,9 @@ int vm_create(pid_t parent_pid, pid_t child_pid){
   page_table_entry_t* child_pt = new page_table_entry_t[VM_ARENA_SIZE/VM_PAGESIZE]; 
   if(it != all_pt.end())
   {
-    /*std::cout << "here\n";*/
     //parent_pid exists
     page_table_entry_t* parent_pt = it->second.st.get();
     // NOTE: no free block fine
-    /*assert(!free_block.empty());*/
     if (it->second.numsw > free_block.size()) {
       return -1;
     }
@@ -278,7 +280,7 @@ int pm_evict(){
   int ppage = runclock();
   //no one can be evicted
   if (ppage == -1) return -1;
-  if(ghost.find(ppage) != ghost.end()){
+  if (ghost.find(ppage) != ghost.end()){
     //ghost page
     if(psuff[ppage].dirty)
       file_write(ghost[ppage].first.c_str(), ghost[ppage].second, (char*)vm_physmem + ppage * VM_PAGESIZE);
@@ -288,14 +290,14 @@ int pm_evict(){
     ghost.erase(ppage); 
     return ppage;
   }
-  myPrint("core: ", "");
-  myPrint("ppage (evict): ", ppage);
-  print_map(core);
+  /*myPrint("core: ", "");*/
+  /*myPrint("ppage (evict): ", ppage);*/
+  /*print_map(core);*/
   assert(core.find(ppage) != core.end());
   //randomly choose one to see if they are in file
   page_table_entry_t* pte = *core[ppage].begin();
-  myPrint("ppage = ", ppage);
-  myPrint("pte = ", pte);
+  /*myPrint("ppage = ", ppage);*/
+  /*myPrint("pte = ", pte);*/
   auto _it = infile.find(pte);
   assert(_it != infile.end());
   assert(free_block.size() <= blcnt);
@@ -313,7 +315,6 @@ int pm_evict(){
     //clear the dirty bit
     psuff[ppage].dirty = 0;
   }
-    /*std::cout << "here\n";*/
     myPrint("filemap:", "");
     print_map(filemap);
   //downward all pte
@@ -339,6 +340,8 @@ int alloc(){
   int ppage;
   myPrint("clock_q: ", "");
   print_queue(clock_q);
+  myPrint("psuff: ", "");
+  print_map(psuff);
   if (!free_ppage.empty()){
     myPrint("a free page!: ", "");
     ppage = free_ppage.front();
@@ -359,12 +362,13 @@ int alloc(){
   }
   myPrint("clock_q: ", "");
   print_queue(clock_q);
+  myPrint("psuff: ", "");
+  print_map(psuff);
   myPrint("alloc: ", ppage);
   return ppage;
 }
 int cow(page_table_entry_t* pte, char* content){
   //copy on write
-  /*std::cout << "cow\n";*/
   //allocate one ppage for it
   myPrint("cow\n", "");
   int ppage = alloc();
@@ -393,7 +397,7 @@ int vm_fault(const void *addr, bool write_flag){
   myPrint("core map: ", "");
   print_map(core);
   uint64_t page = (reinterpret_cast<uint64_t>(addr) - reinterpret_cast<uint64_t>(VM_ARENA_BASEADDR)) >> 16;
-  if (page >= bound) {
+  if (page >= bound || reinterpret_cast<uint64_t>(addr) < reinterpret_cast<uint64_t>(VM_ARENA_BASEADDR)) {
     myPrint("page = ", page);
     myPrint("bound = ", bound);
     return -1;
@@ -633,6 +637,8 @@ void vm_destroy(){
   print_queue(free_block);
   myPrint("free_ppage: ", "");
   print_queue(free_ppage);
+  myPrint("psuff: ", "");
+  print_map(psuff);
  
   myPrint("eblcnt: ", eblcnt);
   #ifdef LOG2

@@ -33,6 +33,7 @@ int main() {
   std::cout <<p[0]++;
   //evicting
   std::cout <<p1[0]++;
+  strcpy(filename3, "papers.txt");
   //p becomes ghost page
 
 }

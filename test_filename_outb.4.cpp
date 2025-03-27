@@ -24,12 +24,14 @@ if(pid2 == 0){
   char* filename = static_cast<char *>(vm_map(nullptr, 0));
   /* Write the name of the file that will be mapped */
   //all pointing to 0
-  strcpy(filename+VM_PAGESIZE-4, "pa");
+  strcpy(filename+VM_PAGESIZE-4, "papp");
   /*strcpy(filename1, "papers.txt");*/
   //all ppage has been written to (swap)
 
   /* Map a page from the specified file */
-  char* p = static_cast<char *>(vm_map (filename+VM_PAGESIZE, 0));
+char* p;
+    if(pid)
+  p = static_cast<char *>(vm_map (filename+VM_PAGESIZE-4, 0));
 
   /* Print the first part of the paper */
     //need evicting(bring from file)

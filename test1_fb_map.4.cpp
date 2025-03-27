@@ -26,7 +26,7 @@ int main() {
     p = static_cast<char *>(vm_map (filename, 1));
     cout << ++p[0];
     p = static_cast<char *>(vm_map (filename, 2));
-    cout << ++p[0];
+    /*cout << ++p[0];*/
   }
   //these should evict all the pages
   strcpy(filename1, "papers.txt");

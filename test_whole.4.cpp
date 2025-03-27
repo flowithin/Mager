@@ -102,8 +102,9 @@ int main() {
     //write fault
     p[i] ++;
   }
-  strcpy(filename1, "papers.txt");
-  strcpy(filename2, "papers.txt");
+  strcpy(filename11, "papers.txt");
+  strcpy(filename22, "papers.txt");
+  strcpy(filename12, "papers.txt");
   //now should be infile rw=0
   char* p5 = static_cast<char *>(vm_map (filename11, 1));
   std::cout << p4[0];
