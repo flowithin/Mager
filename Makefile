@@ -17,8 +17,13 @@ PAGER_SOURCES=pager_old_submit.cpp
 
 # Generate the names of the pager's object files
 PAGER_OBJS=${PAGER_SOURCES:.cpp=.o}
+
+# All test cases
 TESTS=${patsubst %.cpp, %, $(wildcard test*.cpp)}
+
 all: pager $(TESTS)
+
+tests: $(TESTS)
 
 # Compile the pager and tag this compilation
 pager: ${PAGER_OBJS} ${LIBVMPAGER}
@@ -40,4 +45,4 @@ test1: test1.cpp ${LIBVMAPP}
 	${CC} -c $<
 
 clean:
-	rm -f ${PAGER_OBJS} pager test1
+	rm -f ${PAGER_OBJS} pager $(TESTS)

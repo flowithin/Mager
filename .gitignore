@@ -1,3 +1,9 @@
-*pager*.o
-*pager*
-*test*.4
+*
+
+!*.cpp
+!.gitignore
+!Makefile
+!*.h
+!autotag.sh
+!CMakeLists.txt
+!SUBMIT
