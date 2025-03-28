@@ -1,76 +1,44 @@
-#include <algorithm>
-#include <cassert>
-#include <cctype>
-#include <climits>
-#include <cstdint>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <ctime>
-#include <iomanip>
-#include <iostream>
-#include <iterator>
-#include <map>
-#include <memory>
-#include <queue>
-#include <set>
-#include <string>
-#include <system_error>
-#include <unordered_map>
-#include <unordered_set>
-
-#include "vm_arena.h"
 #include "vm_pager.h"
 
-// Physical page bits
-struct ppb {
-    bool ref, dirty;
-};
-// page table struct
-struct Pt {
-    uint32_t size, numsw;
-    std::unique_ptr<page_table_entry_t[]> st;
-};
-enum class file_t {
-    SWAP,
-    FILE_B,
-};
-struct Infile {
-    file_t ftype;
-    bool infile;
-    uint32_t block;
-    std::string filename;
-};
-struct fbp {
-    uint32_t ppage;
-    std::set<page_table_entry_t*> vpset;
-};
+#include "vm_arena.h"
+#include "vm_pager_struct.h"
 
-static uint32_t pcnt;                             // page count
-static uint32_t blcnt;                            // block count
-static uint32_t pinned;                           // pinned page number(0)
-static uint32_t curr_pid;                         // current process id
+// Running Process Information
+static uint32_t curr_pid;                         // id of the running process
 static uint32_t bound;                            // the upper bound of valid virtual page number
-static uint32_t eblcnt;                           // empty block count
+static std::unordered_map<uint32_t, Pt> all_pt;   // page tables corresponding to process ids
+
+// Arena Informatioin
+static uint32_t pcnt;   // page count
+
+// Swap Space Information
+static uint32_t blcnt;                                                       // block count
+static uint32_t eblcnt;                                                      // empty block count
+static std::queue<uint32_t> free_block;                                      // available swap blocks
+static std::unordered_map<uint32_t, std::set<page_table_entry_t*>> swfile;   // swfile_block -> pte
+
+// Physical Memory Information
+static uint32_t pinned;                           // pinned page number(0)
 static std::queue<uint32_t> clock_q;              // all physical pages numbers except for the pinned page
 static std::queue<uint32_t> free_ppage;           // free physical page numbers
 static std::unordered_map<uint32_t, ppb> psuff;   // physical page bits
-static std::unordered_map<uint32_t, Pt> all_pt;   // pid -> pt.
-static std::unordered_map<page_table_entry_t*, Infile> infile;                 // map vpage -> filename
-static std::unordered_map<std::string, std::map<uint32_t, fbp>> filemap;       // filename -> (block, p.t.e)
 static std::unordered_map<uint32_t, std::pair<std::string, uint32_t>> ghost;   // ppage -> (filename, block)
-static std::queue<uint32_t> free_block;
-static std::unordered_map<uint32_t, std::set<page_table_entry_t*>> swfile;   // swfile_block -> pte
-static std::unordered_map<uint32_t, std::set<page_table_entry_t*>>
-  core;   // physical page number -> virtual page pointers
-void p2p(uint32_t loc, char* content) {
-    /*
-     * @brief copy a PAGE's content to vm_physmem starting at physical page loc
-     * @param loc: destination of the copy
-     * @param content: source position of the content
-     *
-     * */
+static std::unordered_map<uint32_t, std::set<page_table_entry_t*>> core;       // ppage -> virtual page pointers
 
+// Virtual Page Information
+static std::unordered_map<page_table_entry_t*, Infile> infile;   // map vpage -> filename
+
+// File-Back Page Info
+static std::unordered_map<std::string, std::map<uint32_t, fbp>> filemap;   // filename -> (block, p.t.e)
+
+
+/*
+ * @brief copy a PAGE's content to vm_physmem starting at physical page loc
+ * @param loc: destination of the copy
+ * @param content: source position of the content
+ *
+ * */
+void p2p(uint32_t loc, char* content) {
     if (content)
         std::memcpy(static_cast<char*>(vm_physmem) + loc * VM_PAGESIZE, content, VM_PAGESIZE);
     else
