@@ -33,22 +33,10 @@ static std::unordered_map<std::string, std::map<uint32_t, fbp>> filemap;   // fi
 
 
 /*
- * @brief copy a PAGE's content to vm_physmem starting at physical page loc
- * @param loc: destination of the copy
- * @param content: source position of the content
+ * @brief the clock algorithm
  *
  * */
-void p2p(uint32_t loc, char* content) {
-    if (content)
-        std::memcpy(static_cast<char*>(vm_physmem) + loc * VM_PAGESIZE, content, VM_PAGESIZE);
-    else
-        memset(static_cast<char*>(vm_physmem) + loc * VM_PAGESIZE, 0, VM_PAGESIZE);
-}
 int runclock() {
-    /*
-     * @brief the clock algorithm
-     *
-     * */
     while (1) {
         clock_q.push(clock_q.front());
         clock_q.pop();
@@ -72,7 +60,7 @@ void vm_init(unsigned int memory_pages, unsigned int swap_blocks) {
     eblcnt = blcnt = swap_blocks;
     pinned = 0;   // may not be valid
     // pinned page init to zeros
-    p2p(0, nullptr);
+    memset(static_cast<char*>(vm_physmem), 0, VM_PAGESIZE);
     for (uint32_t i = 1; i < memory_pages; i++) {
         clock_q.push(i);
         free_ppage.push(i);
@@ -240,7 +228,7 @@ int cow(page_table_entry_t* pte, char* content) {
     int ppage = alloc();
     if (ppage == -1) return -1;
     // write the read value to the new loc
-    p2p(ppage, content);
+    std::memcpy(static_cast<char*>(vm_physmem) + ppage * VM_PAGESIZE, content, VM_PAGESIZE);
     // update core
     core[pte->ppage].erase(pte);
     if (core[pte->ppage].empty()) core.erase(pte->ppage);
