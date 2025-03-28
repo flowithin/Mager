@@ -8,22 +8,20 @@ static uint32_t curr_pid;                         // id of the running process
 static uint32_t bound;                            // the upper bound of valid virtual page number
 static std::unordered_map<uint32_t, Pt> all_pt;   // page tables corresponding to process ids
 
-// Arena Informatioin
-static uint32_t pcnt;   // page count
-
 // Swap Space Information
-static uint32_t blcnt;                                                       // block count
-static uint32_t eblcnt;                                                      // empty block count
+static uint32_t blcnt;                                                       // total swap block count
+static uint32_t eblcnt;                                                      // empty swap block count
 static std::queue<uint32_t> free_block;                                      // available swap blocks
 static std::unordered_map<uint32_t, std::set<page_table_entry_t*>> swfile;   // swfile_block -> pte
 
 // Physical Memory Information
+static uint32_t pcnt;                             // physical page count
 static uint32_t pinned;                           // pinned page number(0)
 static std::queue<uint32_t> clock_q;              // all physical pages numbers except for the pinned page
 static std::queue<uint32_t> free_ppage;           // free physical page numbers
 static std::unordered_map<uint32_t, ppb> psuff;   // physical page bits
 static std::unordered_map<uint32_t, std::pair<std::string, uint32_t>> ghost;   // ppage -> (filename, block)
-static std::unordered_map<uint32_t, std::set<page_table_entry_t*>> core;       // ppage -> virtual page pointers
+static std::unordered_map<uint32_t, std::set<page_table_entry_t*>> core;       // ppage -> mapped virtual page pointers
 
 // Virtual Page Information
 static std::unordered_map<page_table_entry_t*, Infile> infile;   // map vpage -> filename
@@ -38,16 +36,23 @@ static std::unordered_map<std::string, std::map<uint32_t, fbp>> filemap;   // fi
  * */
 int runclock() {
     while (1) {
+        // move front to tail
         clock_q.push(clock_q.front());
         clock_q.pop();
+        // un-reference the referenced pages
         if (psuff[clock_q.back()].ref) {
             psuff[clock_q.back()].ref = 0;
+            // TODO: if a page is marked as referenced, shouldn't this be an assert statement
+            // i.e. it has to be part of the core otherwise some other parts of the program isn't working as expected
             if (core.find(clock_q.back()) != core.end()) {
+                // mark all mapped virtual pages as r=0 & w=0
                 for (auto pte : core[clock_q.back()]) {
                     pte->read_enable = pte->write_enable = 0;
                 }
             }
-        } else {
+        }
+        // return the page to evict and mark as referenced
+        else {
             // the next one is at tail with ref 1
             psuff[clock_q.back()].ref = 1;
             return clock_q.back();
@@ -55,38 +60,39 @@ int runclock() {
     }
     return -1;
 }
+
 void vm_init(unsigned int memory_pages, unsigned int swap_blocks) {
-    pcnt = memory_pages;
+    // initialize the swap space
     eblcnt = blcnt = swap_blocks;
-    pinned = 0;   // may not be valid
+    for (uint32_t i = 0; i < swap_blocks; i++) {
+        free_block.push(i);
+    }
+
+    /* initialize the physical memory */
+    pcnt = memory_pages;
     // pinned page init to zeros
+    pinned = 0;   // may not be valid
     memset(static_cast<char*>(vm_physmem), 0, VM_PAGESIZE);
+    // push other pages into the clock queue
     for (uint32_t i = 1; i < memory_pages; i++) {
         clock_q.push(i);
         free_ppage.push(i);
         psuff[i].ref = psuff[i].dirty = 0;
     }
-    for (uint32_t i = 0; i < swap_blocks; i++) {
-        free_block.push(i);
-    }
 }
 
 int vm_create(pid_t parent_pid, pid_t child_pid) {
-    /*
-     * @brief copy a PAGE's content to vm_physmem starting at physical page loc
-     * @param loc: destination of the copy
-     * @param content: source position of the content
-     *
-     * */
+    uint32_t size = 0;    // parent page table size
+    uint32_t numsw = 0;   // parent swap space size used
+
+    // create a new page table for child process
+    page_table_entry_t* child_pt = new page_table_entry_t[VM_ARENA_SIZE / VM_PAGESIZE];
 
     auto it = all_pt.find(parent_pid);
-    uint32_t size = 0;
-    uint32_t numsw = 0;
-    page_table_entry_t* child_pt = new page_table_entry_t[VM_ARENA_SIZE / VM_PAGESIZE];
     if (it != all_pt.end()) {
         // parent_pid exists
         page_table_entry_t* parent_pt = it->second.st.get();
-        // NOTE: The following code is for 6 credit virtion
+        // NOTE: The following code is for 6 credit version
         if (it->second.numsw > free_block.size()) {
             return -1;
         }
@@ -121,49 +127,70 @@ int vm_create(pid_t parent_pid, pid_t child_pid) {
         child_pt[i].ppage = child_pt[i].write_enable = child_pt[i].read_enable = 0;
     }
     eblcnt -= numsw;
+    // record the new page table for child process
     all_pt[child_pid] = Pt({ size, numsw, std::unique_ptr<page_table_entry_t[]>(child_pt) });
     return 0;
 }
 
 void vm_switch(pid_t pid) {
+    // update running process info
     curr_pid = pid;
     bound = all_pt[pid].size;
     page_table_base_register = all_pt[pid].st.get();
 }
 
 
+/*
+ *  @brief evict one page from the current clock queue
+ *
+ * */
 int pm_evict() {
-    /*
-     *  @brief evict one page from the current clock queue
-     *
-     * */
+    // get a physical page to move things in
     int ppage = runclock();
+
     // no one can be evicted
+    // TODO: this line seems useless or can be replaces with assert
     if (ppage == -1) return -1;
+
+    // if the page is a left over from a previously destroyed process
+    // TODO: what kind of pages are ghosted
     if (ghost.find(ppage) != ghost.end()) {
-        // ghost page
+        // clean up the page
         if (psuff[ppage].dirty) {
+            // write back dirty page
             file_write(ghost[ppage].first.c_str(), ghost[ppage].second, (char*) vm_physmem + ppage * VM_PAGESIZE);
+            // mark as clean
             psuff[ppage].dirty = 0;
         }
+        // remove its record
         filemap[ghost[ppage].first].erase(ghost[ppage].second);
-        if (filemap[ghost[ppage].first].empty()) filemap.erase(ghost[ppage].first);
+        // if no longer referenced by other process
+        if (filemap[ghost[ppage].first].empty()) {
+            filemap.erase(ghost[ppage].first);
+        }
         ghost.erase(ppage);
         return ppage;
     }
+
+    // if the page is free or part of a running process
+    // TODO: what is core? what is infile?
     assert(core.find(ppage) != core.end());
     // randomly choose one to see if they are in file
     page_table_entry_t* pte = *core[ppage].begin();
     auto _it = infile.find(pte);
     assert(_it != infile.end());
     assert(free_block.size() <= blcnt);
-    const char* filename;
 
-    if (_it->second.ftype == file_t::SWAP)
+    // retrieve the write back filename and block index
+    const char* filename;
+    if (_it->second.ftype == file_t::SWAP) {
         filename = nullptr;
-    else
+    } else {
         filename = _it->second.filename.c_str();
+    }
     uint32_t block = infile[pte].block;
+
+    // write back if dirty
     if (psuff[ppage].dirty) {
         // write back if dirty
         void* eaddr = (char*) (vm_physmem) + ppage * VM_PAGESIZE;
@@ -171,6 +198,7 @@ int pm_evict() {
         // clear the dirty bit
         psuff[ppage].dirty = 0;
     }
+
     // downward all pte
     if (_it->second.ftype == file_t::FILE_B) {
         // not in physmem anymore
