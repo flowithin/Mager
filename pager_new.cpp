@@ -1,3 +1,5 @@
+
+
 #include "pager.h"
 #include <cstdint>
 static uint32_t pcnt;
@@ -111,7 +113,7 @@ uintptr_t pm_evict(){
     filename = _it->second.filename.c_str();
   uint32_t block = infile[pte].block;
   if(psuff[ppage].dirty){
-    //write back if dirty
+  //write back if dirty
     void* eaddr = (char*)(vm_physmem) + ppage * VM_PAGESIZE;
     file_write(filename, block, eaddr);
     //clear the dirty bit
@@ -244,7 +246,7 @@ char mem(const char* addr){
 }
 std::string vm_to_string(const char *filename){
   if(filename < (char*)VM_ARENA_BASEADDR || filename >= (char*)(reinterpret_cast<uintptr_t>(VM_ARENA_BASEADDR)+ reinterpret_cast<uintptr_t>(VM_ARENA_SIZE)))
-    return "@FAULT";
+      return "@FAULT";
   uint32_t vpage = a2p(filename);
   uint32_t i=0;
   std::string rs;
@@ -264,7 +266,7 @@ std::string vm_to_string(const char *filename){
 }
 void* vm_map(const char *filename, unsigned int block){
   if((filename == nullptr && free_block.empty()) || bound == VM_ARENA_SIZE/VM_PAGESIZE){
-    return nullptr;
+      return nullptr;
   }
   page_table_entry_t* new_entry = page_table_base_register + all_pt[curr_pid].size;
   //file-backed
@@ -297,7 +299,7 @@ void* vm_map(const char *filename, unsigned int block){
         //update core only if in mem
         if(!is_infile){
           core[new_entry->ppage].insert(new_entry);
-        }
+       }
         //filemap update
         _it->second.vpset.insert(new_entry);
       } else goto notmatched;
@@ -358,9 +360,9 @@ void vm_discard(page_table_entry_t* pte){
     else if(core[pte->ppage].size() == 1 && pte->ppage != pinned)
     {
     //give back the page
-    free_ppage.push(pte->ppage);
-    psuff[pte->ppage].ref = psuff[pte->ppage].dirty = 0;
-  }
+      free_ppage.push(pte->ppage);
+      psuff[pte->ppage].ref = psuff[pte->ppage].dirty = 0;
+    }
     if(core[pte->ppage].size() > 1)
       core[pte->ppage].erase(pte);
     else core.erase(pte->ppage);
