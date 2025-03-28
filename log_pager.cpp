@@ -1,5 +1,6 @@
 #include "pager.h"
-#include <cstdint>
+#include <cassert>
+#define LOG
 static uint32_t pcnt;
 static uint32_t blcnt;
 static uint32_t pinned;
@@ -17,7 +18,6 @@ static std::queue<uint32_t> free_block;
 static std::unordered_map<uint32_t, std::set<page_table_entry_t*>> swfile;//swfile_block -> pte
 static std::unordered_map<uint32_t, std::set<page_table_entry_t*>> core;
 
-/*#define LOG*/
 
 void p2p(uint32_t loc, char* content){
   if(content)
@@ -25,7 +25,7 @@ void p2p(uint32_t loc, char* content){
   else 
     memset(static_cast<char *>(vm_physmem) + loc * VM_PAGESIZE, 0, VM_PAGESIZE);
 }
-uint32_t runclock(){
+int runclock(){
   while(1){
     clock_q.push(clock_q.front());
     clock_q.pop();
@@ -42,6 +42,7 @@ uint32_t runclock(){
       return clock_q.back();
     }
   }
+  return -1;
 }
 void vm_init(unsigned int memory_pages, unsigned int swap_blocks){
   pcnt = memory_pages;
@@ -60,12 +61,51 @@ void vm_init(unsigned int memory_pages, unsigned int swap_blocks){
 }
 
 int vm_create(pid_t parent_pid, pid_t child_pid){
+  auto it = all_pt.find(parent_pid);
+  uint32_t size = 0;
+  uint32_t numsw = 0;
   page_table_entry_t* child_pt = new page_table_entry_t[VM_ARENA_SIZE/VM_PAGESIZE]; 
-  //empty areana
-  for(size_t i = 0; i < VM_ARENA_SIZE / VM_PAGESIZE; i++){
+  if(it != all_pt.end())
+  {
+    //parent_pid exists
+    page_table_entry_t* parent_pt = it->second.st.get();
+    // NOTE: no free block fine
+    if (it->second.numsw > free_block.size()) {
+      return -1;
+    }
+    size = it->second.size;
+    for(size_t i = 0; i < size; i++){
+      //cow
+      parent_pt[i].write_enable = 0;
+      //duplicate
+      child_pt[i] = parent_pt[i];
+      //update core
+      core[child_pt[i].ppage].insert(child_pt+i);
+      //update infile
+      auto _it = infile.find(parent_pt+i);
+      assert(_it != infile.end());
+      if (_it->second.ftype == file_t::FILE_B)
+      {
+        infile[child_pt+i] = {_it->second.ftype, _it->second.infile, _it->second.block, _it->second.filename};
+        //update filemap
+        filemap[_it->second.filename][_it->second.block].vpset.insert(child_pt+i);
+      } else {
+        infile[child_pt+i] = {_it->second.ftype, _it->second.infile, free_block.front(), _it->second.filename};
+        swfile[free_block.front()].insert(child_pt+i);
+        free_block.pop();
+        eblcnt--;
+      }
+   }
+    numsw = it->second.numsw;
+  }//if it not end
+  //empty the arena (just a try)
+  for(size_t i = size; i < VM_ARENA_SIZE / VM_PAGESIZE; i++){
     child_pt[i].ppage = child_pt[i].write_enable = child_pt[i].read_enable = 0;
   }
-  all_pt[child_pid] = Pt({0, 0, std::unique_ptr<page_table_entry_t []>(child_pt)});
+  eblcnt -= numsw;
+  all_pt[child_pid] = Pt({size, numsw, std::unique_ptr<page_table_entry_t []>(child_pt)});
+  /*if(it != all_pt.end() && it->second.size != 0)*/
+  /*  assert(it->second.st[it->second.size-1].ppage == all_pt[child_pid].st[all_pt[child_pid].size - 1].ppage);*/
   return 0;
 }
 
@@ -77,11 +117,11 @@ void vm_switch(pid_t pid){
 
 
 
-uintptr_t pm_evict(){
+int pm_evict(){
   myPrint("pm_evict", "");
-  uint32_t ppage = runclock();
-  myPrint("ppage", ppage);
+  int ppage = runclock();
   //no one can be evicted
+  if (ppage == -1) return -1;
   if (ghost.find(ppage) != ghost.end()){
     //ghost page
     if(psuff[ppage].dirty)
@@ -97,16 +137,22 @@ uintptr_t pm_evict(){
     assert(it == core.end());
     return ppage;
   }
+  /*myPrint("core: ", "");*/
+  /*myPrint("ppage (evict): ", ppage);*/
+  /*print_map(core);*/
   assert(core.find(ppage) != core.end());
   //randomly choose one to see if they are in file
   //should have one since not ghost page
   page_table_entry_t* pte = *core[ppage].begin();
+  /*myPrint("ppage = ", ppage);*/
+  /*myPrint("pte = ", pte);*/
   auto _it = infile.find(pte);
   assert(_it != infile.end());
   assert(free_block.size() <= blcnt);
   const char* filename;
+
   if(_it->second.ftype == file_t::SWAP)
-    filename = nullptr;
+     filename = nullptr;
   else
     filename = _it->second.filename.c_str();
   uint32_t block = infile[pte].block;
@@ -117,8 +163,8 @@ uintptr_t pm_evict(){
     //clear the dirty bit
     psuff[ppage].dirty = 0;
   }
-  myPrint("filemap: ", "");
-  print_map(filemap);
+    myPrint("filemap:", "");
+    print_map(filemap);
   //downward all pte
   if(_it->second.ftype == file_t::FILE_B){
     //not in physmem anymore
@@ -127,20 +173,25 @@ uintptr_t pm_evict(){
       infile[v].infile = true;
     }
   } else {
-    infile[pte].infile = true;
-    pte->read_enable = pte->write_enable = 0;
+    for(auto v : swfile[block]){
+      v->write_enable = v->read_enable = 0;
+      infile[v].infile = true;
+    }
   }
   //update core
   core.erase(ppage);
   return ppage;
 }
 
-uintptr_t alloc(){
+int alloc(){
   //return a usable ppage
-  uintptr_t ppage;
+  int ppage;
+  myPrint("clock_q: ", "");
+  print_queue(clock_q);
+  myPrint("psuff: ", "");
+  print_map(psuff);
   if (!free_ppage.empty()){
-    /*myPrint("free_ppage: ", "");*/
-    /*print_queue(free_ppage);*/
+    myPrint("a free page!: ", "");
     ppage = free_ppage.front();
     free_ppage.pop();
     //want the clock to be aware of the new ppage
@@ -155,14 +206,23 @@ uintptr_t alloc(){
   } else {
     //need evicting
     ppage = pm_evict();
+    if (ppage == -1) return -1;
   }
+  myPrint("clock_q: ", "");
+  print_queue(clock_q);
+  myPrint("psuff: ", "");
+  print_map(psuff);
+  myPrint("alloc: ", ppage);
   return ppage;
 }
-void cow(page_table_entry_t* pte){
+int cow(page_table_entry_t* pte, char* content){
   //copy on write
   //allocate one ppage for it
-  uint32_t ppage = alloc();
+  myPrint("cow\n", "");
+  int ppage = alloc();
+  if(ppage == -1) return -1;
   //write the read value to the new loc
+  p2p(ppage, content);
   //update core
   core[pte->ppage].erase(pte);
   if(core[pte->ppage].empty()) core.erase(pte->ppage);
@@ -170,17 +230,23 @@ void cow(page_table_entry_t* pte){
   pte->read_enable = pte->write_enable = 1;
   core[pte->ppage].insert(pte);
   //update ref and dirty and write read
+  //dirty bit = 1
   psuff[pte->ppage].dirty = 1;
   assert(psuff[pte->ppage].ref == 1);//ref should have been 1
+  return 0;
 }
 
 bool is_cow(page_table_entry_t* pte){
   //pte should exist in core and also in mem
-  return pte->ppage == pinned;
+  return (core.find(pte->ppage) != core.end() && core[pte->ppage].size() > 1 && infile[pte].ftype == file_t::SWAP && !infile[pte].infile) || pte->ppage == pinned;
 }
 int vm_fault(const void *addr, bool write_flag){
+  myPrint("core map: ", "");
+  print_map(core);
   uint64_t page = (reinterpret_cast<uint64_t>(addr) - reinterpret_cast<uint64_t>(VM_ARENA_BASEADDR)) >> 16;
   if (page >= bound || reinterpret_cast<uint64_t>(addr) < reinterpret_cast<uint64_t>(VM_ARENA_BASEADDR)) {
+    myPrint("page = ", page);
+    myPrint("bound = ", bound);
     return -1;
   }
   page_table_entry_t* pte = page_table_base_register + page;
@@ -191,61 +257,84 @@ int vm_fault(const void *addr, bool write_flag){
     //in file, bring back
     int epage = alloc();
     assert(psuff[epage].dirty == 0);
+    if (epage == -1) return -1;
     void* eaddr =static_cast<char*>(vm_physmem) + epage * VM_PAGESIZE;
+    myPrint("epage: ", epage);
     if(file_read(it->second.ftype == file_t::FILE_B ? it->second.filename.c_str() : nullptr, it->second.block, eaddr) == -1)
     {
       free_ppage.push(epage);
       psuff[epage].ref = psuff[epage].dirty = 0;
       return -1;
     }
-    pte->ppage = epage;
-    infile[pte].infile = false;
-    core[pte->ppage].insert(pte);
     //others lifted 
+    auto& lifted = (it->second.ftype == file_t::SWAP)
+      ? swfile[it->second.block]
+      : filemap[it->second.filename][it->second.block].vpset;
+    myPrint("filemap: ", "");
+    print_map(filemap);
+    for(auto l: lifted){
+      infile[l].infile = false;
+      l->ppage = epage;
+      l->read_enable = 1;
+      assert(l->write_enable ==0);//should have already evicted the dirty page
+      //core map insert
+      core[epage].insert(l);
+    }
+    if(it->second.ftype == file_t::FILE_B)
+      filemap[it->second.filename][it->second.block].ppage = epage;
   }//if infile
   pte->read_enable = 1;
-  //now pte should be resident
   auto it_psuff = psuff.find(pte->ppage);
   if(it_psuff != psuff.end()){
     it_psuff->second.ref = 1;
-    if(it_psuff->second.dirty || write_flag)
+    if(it_psuff->second.dirty)
       pte->write_enable = 1;//if dirty no need to set dirty
-
+    if(it->second.ftype == file_t::FILE_B){
+    auto& lifted = filemap[it->second.filename][it->second.block].vpset;
+    for(auto l: lifted){
+      *l = *pte;
+      }
+    }
   }//except for pinned page
   bool _is_cow = is_cow(pte);
   if (write_flag)
   {
     if (_is_cow){
       //copy on write
-      cow(pte);
+      if(cow(pte, static_cast<char *>(vm_physmem) + pte->ppage * VM_PAGESIZE) == -1) 
+        return -1;
     } else {
+      assert(it_psuff != psuff.end());//shouldn't be pinned page
       it_psuff->second.dirty = 1;
-      pte->read_enable = pte->write_enable = 1;
+      //pte->ppage should be updated by now
+      for(auto p : core[pte->ppage]){
+        p->read_enable = p->write_enable = 1;
+      }
     }
   }
-  if(it->second.ftype == file_t::FILE_B){
-    filemap[it->second.filename][it->second.block].ppage = pte->ppage;
-    auto& lifted = filemap[it->second.filename][it->second.block].vpset;
-    for(auto l: lifted){
-      *l = *pte;
-      infile[l] = infile[pte];
-      core[pte->ppage].insert(l);
-    }
-  }
+  myPrint("core map: ", "");
+  print_map(core);
+  myPrint("psuff: ", "");
+  print_map(psuff);
+
+
   return 0;
 }
 
 
 uint32_t a2p(const char* addr){
+  /*myPrint("addr = ", reinterpret_cast<uintptr_t>(addr));*/
+  /*myPrint("return = ", (reinterpret_cast<uintptr_t>(addr) - reinterpret_cast<uintptr_t>(VM_ARENA_BASEADDR)) >> 16);*/
   return (reinterpret_cast<uintptr_t>(addr) - reinterpret_cast<uintptr_t>(VM_ARENA_BASEADDR)) >> 16;
 }
 char mem(const char* addr){
   return static_cast<char *>(vm_physmem)[page_table_base_register[a2p(addr)].ppage * VM_PAGESIZE + (reinterpret_cast<uintptr_t>(addr) & 0xFFFF)];
 }
 std::string vm_to_string(const char *filename){
-  if(filename < (char*)VM_ARENA_BASEADDR || filename >= (char*)(reinterpret_cast<uintptr_t>(VM_ARENA_BASEADDR)+ reinterpret_cast<uintptr_t>(VM_ARENA_SIZE)))
+  if(filename < (char*)VM_ARENA_BASEADDR || filename >= (char*)(VM_ARENA_BASEADDR + VM_ARENA_SIZE))
       return "@FAULT";
   uint32_t vpage = a2p(filename);
+  /*uint32_t offset = reinterpret_cast<uintptr_t>(filename)& 0xFFFF;*/
   uint32_t i=0;
   std::string rs;
   auto vaddr = VM_ARENA_BASEADDR + vpage * VM_PAGESIZE;
@@ -271,21 +360,21 @@ void* vm_map(const char *filename, unsigned int block){
   if(filename != nullptr){
     std::string file_str = vm_to_string(filename);
     if(file_str == "@FAULT") return nullptr;
+    myPrint("file_str = ", file_str);
     auto it = filemap.find(file_str);
     if (it != filemap.end()){
       //file matched
       auto _it = it->second.find(block);
       if(_it != it->second.end()){
         //block matched
-        myPrint("filemap: ", "");
-        print_map(filemap);
-        myPrint("ghost: ", "");
-        print_map(ghost);
+        myPrint("matched! ","");
         if(ghost.find(_it->second.ppage) != ghost.end()){
-          new_entry->ppage = _it->second.ppage;
+        new_entry->ppage = _it->second.ppage;
           //it is a ghost page!
           assert(_it->second.vpset.empty());
           ghost.erase(_it->second.ppage);
+          // NOTE: not sure
+          // to set ref
           new_entry->read_enable = psuff[_it->second.ppage].ref;
           new_entry->write_enable = psuff[_it->second.ppage].ref & psuff[_it->second.ppage].dirty;
         } else {
@@ -325,14 +414,20 @@ void* vm_map(const char *filename, unsigned int block){
 
 void vm_discard(page_table_entry_t* pte){
   auto it = infile.find(pte);
+  /*std::cout << "infile size: " << infile.size() << '\n';*/
+  /*myPrint("infile: ", infile, print_map<page_table_entry_t*, Infile>);*/
   assert(it!=infile.end());
   //free the blocks used and write back
   switch (it->second.ftype) {
     case file_t::SWAP: {
       //the last one leaves free up the block
-      free_block.push(it->second.block);
-      swfile.erase(it->second.block);
-      eblcnt++;
+      if(swfile[it->second.block].size() == 1){
+        free_block.push(it->second.block);
+        swfile.erase(it->second.block);
+        eblcnt++;
+      } else {
+        swfile[it->second.block].erase(pte);
+      }
       break;
     }
     case file_t::FILE_B: {
@@ -369,24 +464,47 @@ void vm_discard(page_table_entry_t* pte){
   infile.erase(pte);
 }
 
+void rehash_all(){
+  infile.rehash(0);
+  filemap.rehash(0);
+  swfile.rehash(0);
+  core.rehash(0);
+}
 void vm_destroy(){
-
-  myPrint("core: ", "");
-  print_map(core);
+  myPrint("infile size: ", infile.size());
+  print_map(infile);
   //free all physical mem
+  myPrint("filemap: ","");
+  print_map(filemap);
+  myPrint("core: ","");
+  print_map(core);
+  myPrint("swfile: ","");
+  print_map(swfile);
   for(size_t i = 0; i < all_pt[curr_pid].size; i++){
     vm_discard(page_table_base_register + i);
   }
-  //free page table
-  all_pt.erase(curr_pid);
-  myPrint("psuff: ", "");
-  print_map(psuff);
-  myPrint("ghost: ", "");
-  print_map(ghost);
-  myPrint("filemap: ", "");
+  myPrint("core after discard: ","");
+  print_map(core);
+  myPrint("filemap: ","");
   print_map(filemap);
-
+  myPrint("ghost: ","");
+  print_map(ghost);
+  //free page table
+  all_pt[curr_pid].st.reset();
+  all_pt.erase(curr_pid);
+  /*rehash_all();*/
+  myPrint("free_block: ", "");
+  print_queue(free_block);
   myPrint("free_ppage: ", "");
   print_queue(free_ppage);
+  myPrint("psuff: ", "");
+  print_map(psuff);
+ 
+  myPrint("eblcnt: ", eblcnt);
+  #ifdef LOG2
+  if(all_pt.empty())
+    std::cout << "--------------------------finished-----------------------------\n";
+  std::cout << "-------------------------------------------------------\n";
+  #endif
 }
 

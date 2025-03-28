@@ -8,7 +8,7 @@ for i in {0..5}; do
   printf "iter${RED}%d" i
 for test in "${shuffled[@]}"; do
   printf "\n**${BLUE}$test${NC} running**\n"
-  ./$test > $test.out
+  ./$test 
   wait
 done
 done
