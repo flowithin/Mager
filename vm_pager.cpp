@@ -217,15 +217,14 @@ int pm_evict() {
     return ppage;
 }
 
+/*
+ *  @brief allocate one page and clear its traces
+ *
+ *
+ * */
 int alloc() {
-    /*
-     *  @brief allocate one page and clear its traces
-     *
-     *
-     * */
-
-    // return a usable ppage
     int ppage;
+    // if a free page is available
     if (!free_ppage.empty()) {
         ppage = free_ppage.front();
         free_ppage.pop();
@@ -238,8 +237,9 @@ int alloc() {
         }
         clock_q.push(ppage);
         psuff[ppage].ref = 1;
-    } else {
-        // need evicting
+    }
+    // otherwise evict to make space
+    else {
         ppage = pm_evict();
         if (ppage == -1) return -1;
     }
