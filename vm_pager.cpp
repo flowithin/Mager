@@ -352,16 +352,17 @@ std::string vm_to_string(const char* filename) {
      *
      * */
 
-    if (filename < (char*) VM_ARENA_BASEADDR || filename >= (char*) (VM_ARENA_BASEADDR + VM_ARENA_SIZE))
+    if (filename < static_cast<char*>(VM_ARENA_BASEADDR)
+        || filename >= (char*) (static_cast<char*>(VM_ARENA_BASEADDR) + VM_ARENA_SIZE))
         return "@FAULT";
     uint32_t vpage = a2p(filename);
     /*uint32_t offset = reinterpret_cast<uintptr_t>(filename)& 0xFFFF;*/
     uint32_t i = 0;
     std::string rs;
-    auto vaddr = VM_ARENA_BASEADDR + vpage * VM_PAGESIZE;
+    // auto vaddr = static_cast<char*>(VM_ARENA_BASEADDR) + vpage * VM_PAGESIZE;
     while (1) {
         // trigger fault if not in arena
-        auto vaddr = VM_ARENA_BASEADDR + vpage * VM_PAGESIZE;
+        auto vaddr = static_cast<char*>(VM_ARENA_BASEADDR) + vpage * VM_PAGESIZE;
         if (page_table_base_register[vpage].read_enable == 0 && vm_fault(vaddr, 0) == -1) return "@FAULT";
         if (mem(filename + i) == '\0') break;
         // the string we want to read
@@ -392,7 +393,7 @@ void* vm_map(const char* filename, unsigned int block) {
                     // NOTE: not sure
                     // to set ref
                     new_entry->read_enable = psuff[_it->second.ppage].ref;
-                    new_entry->write_enable = psuff[_it->second.ppage].ref & psuff[_it->second.ppage].dirty;
+                    new_entry->write_enable = psuff[_it->second.ppage].ref && psuff[_it->second.ppage].dirty;
                 } else {
                     *new_entry = **_it->second.vpset.begin();
                 }
