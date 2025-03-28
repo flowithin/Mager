@@ -21,13 +21,6 @@ int main() {
  /* Write the name of the file that will be mapped */
   //all pointing to 0
   strcpy(filename, "papers.txt");
-  char* p;
-  if(pid == 0){
-    p = static_cast<char *>(vm_map (filename, 1));
-    cout << ++p[0];
-    p = static_cast<char *>(vm_map (filename, 2));
-    cout << ++p[0];
-  }
   //these should evict all the pages
   strcpy(filename1, "papers.txt");
   strcpy(filename2, "papers.txt");
@@ -36,7 +29,6 @@ int main() {
   //all ppage has been written to (swap)
 
   /* Map a page from the specified file */
-  p = static_cast<char *>(vm_map (filename, 0));
   char* p1 = static_cast<char *>(vm_map (filename1, 0));
   char* p2 = static_cast<char *>(vm_map (filename1, 0));
   char* p3 = static_cast<char *>(vm_map (filename1, 1));
@@ -45,9 +37,9 @@ int main() {
   /* Print the first part of the paper */
   for (unsigned int i=0; i<10; i++) {
     //need evicting(bring from file)
-    cout << p[i];
+    cout << p1[i];
     //write fault
-    p[i] ++;
+    p1[i] ++;
   }
   cout << '\n';
   for (unsigned int i=0; i<10; i++) {
@@ -60,11 +52,5 @@ int main() {
   for (unsigned int i=0; i<10; i++) {
     cout << p4[i];
     cout << p4[i];
-  }
-  //now (p, p1, p2); (p3, p4) are ghost pages
-  if(pid != 0){
-  strcpy(filename1, "papers.txt");
-  strcpy(filename2, "papers.txt");
-  strcpy(filename, "papers.txt");
   }
 }

@@ -167,7 +167,7 @@ void myPrint(std::string words, const T& t){
   /*  *func(t);*/
   /*else */
 
-  std::cout << std::hex << t << "\n";
+  std::cout << std::hex << t << std::endl;
 #endif
 }
 
@@ -283,7 +283,10 @@ int pm_evict(){
   if (ghost.find(ppage) != ghost.end()){
     //ghost page
     if(psuff[ppage].dirty)
+    {
       file_write(ghost[ppage].first.c_str(), ghost[ppage].second, (char*)vm_physmem + ppage * VM_PAGESIZE);
+      psuff[ppage].dirty = 0;
+    }
     filemap[ghost[ppage].first].erase(ghost[ppage].second);
     if(filemap[ghost[ppage].first].empty())
       filemap.erase(ghost[ppage].first);
@@ -381,8 +384,6 @@ int cow(page_table_entry_t* pte, char* content){
   pte->ppage = ppage;
   core[pte->ppage].insert(pte);
   //update ref and dirty and write read
-  //update infile
-  //This is done in vm_map
   //dirty bit = 1
   psuff[pte->ppage].dirty = 1;
   pte->read_enable = pte->write_enable = 1;
@@ -464,6 +465,9 @@ int vm_fault(const void *addr, bool write_flag){
   }
   myPrint("core map: ", "");
   print_map(core);
+  myPrint("psuff: ", "");
+  print_map(psuff);
+
 
   return 0;
 }
@@ -478,13 +482,17 @@ char mem(const char* addr){
   return static_cast<char *>(vm_physmem)[page_table_base_register[a2p(addr)].ppage * VM_PAGESIZE + (reinterpret_cast<uintptr_t>(addr) & 0xFFFF)];
 }
 std::string vm_to_string(const char *filename){
+  if(filename < (char*)VM_ARENA_BASEADDR || filename >= (char*)(VM_ARENA_BASEADDR + VM_ARENA_SIZE))
+      return "@FAULT";
   uint32_t vpage = a2p(filename);
   /*uint32_t offset = reinterpret_cast<uintptr_t>(filename)& 0xFFFF;*/
   uint32_t i=0;
   std::string rs;
+  auto vaddr = VM_ARENA_BASEADDR + vpage * VM_PAGESIZE;
   while(1){
     //trigger fault if not in arena
-    if(page_table_base_register[vpage].read_enable == 0 && vm_fault(VM_ARENA_BASEADDR + vpage * VM_PAGESIZE, 0) == -1)
+    auto vaddr = VM_ARENA_BASEADDR + vpage * VM_PAGESIZE;
+    if(page_table_base_register[vpage].read_enable == 0 && vm_fault(vaddr, 0) == -1)
       return "@FAULT";
     if (mem(filename + i) == '\0')
       break;
@@ -492,7 +500,6 @@ std::string vm_to_string(const char *filename){
     rs += mem(filename + i++);
     vpage = a2p(filename + i);
   }
-  /*myPrint("vm_to_string", "");*/
   return rs;
 }
 void* vm_map(const char *filename, unsigned int block){
@@ -547,7 +554,7 @@ void* vm_map(const char *filename, unsigned int block){
     all_pt[curr_pid].numsw++;
     eblcnt--;
     *new_entry = {.ppage = pinned, .read_enable = 1, .write_enable = 0 };
-    core[new_entry->ppage].insert(new_entry);
+    core[pinned].insert(new_entry);
   }
   //update core
   bound = ++all_pt[curr_pid].size;
@@ -575,8 +582,10 @@ void vm_discard(page_table_entry_t* pte){
     case file_t::FILE_B: {
       //deeply clean filemap
       assert(filemap[it->second.filename][it->second.block].vpset.find(pte) != filemap[it->second.filename][it->second.block].vpset.end());
+      //deeply remove pte
       filemap[it->second.filename][it->second.block].vpset.erase(pte);
       if(it->second.infile){
+        //remove all trace!
         if(filemap[it->second.filename][it->second.block].vpset.empty())
           filemap[it->second.filename].erase(it->second.block);
         if(filemap[it->second.filename].empty())
