@@ -1,2 +1,3 @@
 test*.cpp
-pager.*
+pager.cpp
+pager.h
