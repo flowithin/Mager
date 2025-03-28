@@ -21,11 +21,9 @@
 #include <system_error>
 #include <unordered_set>
 
-struct PMB{bool ref, dirty;};
-struct Clock{
-  uint32_t ppage;
-  bool free;
-};
+//Physical page bits 
+struct ppb{bool ref, dirty;};
+//page table struct
 struct Pt{
   uint32_t size, numsw;
   std::unique_ptr<page_table_entry_t []> st;
@@ -45,29 +43,40 @@ struct fbp{
   std::set<page_table_entry_t*> vpset;
 };
 
-static uint32_t pcnt;
-static uint32_t blcnt;
-static uint32_t pinned;
-static uint32_t curr_pid;
-static uint32_t bound;
-static uint32_t eblcnt;
-static std::queue<uint32_t> clock_q;
-static std::queue<uint32_t> free_ppage;
-static std::unordered_map<uint32_t, PMB> psuff;
+static uint32_t pcnt;//page count
+static uint32_t blcnt;//block count
+static uint32_t pinned;//pinned page number(0)
+static uint32_t curr_pid;//current process id
+static uint32_t bound;//the upper bound of valid virtual page number
+static uint32_t eblcnt;//empty block count
+static std::queue<uint32_t> clock_q;//all physical pages numbers except for the pinned page
+static std::queue<uint32_t> free_ppage;// free physical page numbers
+static std::unordered_map<uint32_t, ppb> psuff;//physical page bits 
 static std::unordered_map<uint32_t, Pt> all_pt; //pid -> pt.
 static std::unordered_map<page_table_entry_t*, Infile> infile;//map vpage -> filename
 static std::unordered_map<std::string, std::map<uint32_t, fbp>> filemap;//filename -> (block, p.t.e)
 static std::unordered_map<uint32_t, std::pair<std::string, uint32_t>> ghost;//ppage -> (filename, block)
 static std::queue<uint32_t> free_block;
 static std::unordered_map<uint32_t, std::set<page_table_entry_t*>> swfile;//swfile_block -> pte
-static std::unordered_map<uint32_t, std::set<page_table_entry_t*>> core;
+static std::unordered_map<uint32_t, std::set<page_table_entry_t*>> core;//physical page number -> virtual page pointers
 void p2p(uint32_t loc, char* content){
+  /*
+   * @brief copy a PAGE's content to vm_physmem starting at physical page loc
+   * @param loc: destination of the copy
+   * @param content: source position of the content
+   *
+   * */
+
   if(content)
     std::memcpy(static_cast<char *>(vm_physmem) + loc * VM_PAGESIZE, content, VM_PAGESIZE);
   else 
     memset(static_cast<char *>(vm_physmem) + loc * VM_PAGESIZE, 0, VM_PAGESIZE);
 }
 int runclock(){
+  /*
+   * @brief the clock algorithm
+   *
+   * */
   while(1){
     clock_q.push(clock_q.front());
     clock_q.pop();
@@ -87,6 +96,7 @@ int runclock(){
   return -1;
 }
 void vm_init(unsigned int memory_pages, unsigned int swap_blocks){
+
   pcnt = memory_pages;
   eblcnt = blcnt = swap_blocks;
   pinned = 0;//may not be valid
@@ -103,6 +113,13 @@ void vm_init(unsigned int memory_pages, unsigned int swap_blocks){
 }
 
 int vm_create(pid_t parent_pid, pid_t child_pid){
+  /*
+   * @brief copy a PAGE's content to vm_physmem starting at physical page loc
+   * @param loc: destination of the copy
+   * @param content: source position of the content
+   *
+   * */
+
   auto it = all_pt.find(parent_pid);
   uint32_t size = 0;
   uint32_t numsw = 0;
@@ -111,7 +128,7 @@ int vm_create(pid_t parent_pid, pid_t child_pid){
   {
     //parent_pid exists
     page_table_entry_t* parent_pt = it->second.st.get();
-    // NOTE: no free block fine
+    // NOTE: The following code is for 6 credit virtion
     if (it->second.numsw > free_block.size()) {
       return -1;
     }
@@ -158,6 +175,10 @@ void vm_switch(pid_t pid){
 
 
 int pm_evict(){
+  /*
+   *  @brief evict one page from the current clock queue
+   *  
+   * */
   int ppage = runclock();
   //no one can be evicted
   if (ppage == -1) return -1;
@@ -213,6 +234,12 @@ int pm_evict(){
 }
 
 int alloc(){
+  /*
+   *  @brief allocate one page and clear its traces
+   *  
+   *  
+   * */
+ 
   //return a usable ppage
   int ppage;
   if (!free_ppage.empty()){
@@ -235,6 +262,11 @@ int alloc(){
   return ppage;
 }
 int cow(page_table_entry_t* pte, char* content){
+  /*
+   *  @brief copy on write operation
+   *  @param pte: ptr to page table entry interested in
+   *  @param content: the content in its old page
+   * */
   //copy on write
   //allocate one ppage for it
   int ppage = alloc();
@@ -326,12 +358,33 @@ int vm_fault(const void *addr, bool write_flag){
 
 
 uint32_t a2p(const char* addr){
+  /*
+   *  @brief from usr's virtual address to the virtual page number it is in
+   *
+   *  @param addr: the virtual address
+   *  
+   * */
+ 
   return (reinterpret_cast<uintptr_t>(addr) - reinterpret_cast<uintptr_t>(VM_ARENA_BASEADDR)) >> 16;
 }
 char mem(const char* addr){
+  /*
+   *  @brief from usr's virtual address to physical memory content
+   *
+   *  @param addr: usr's virtual address
+   *  
+   * */
+ 
   return static_cast<char *>(vm_physmem)[page_table_base_register[a2p(addr)].ppage * VM_PAGESIZE + (reinterpret_cast<uintptr_t>(addr) & 0xFFFF)];
 }
 std::string vm_to_string(const char *filename){
+  /*
+   *  @brief from virtual address to the c string it points to 
+   *
+   *  @param filename: usr's virtual address
+   *  
+   * */
+ 
   if(filename < (char*)VM_ARENA_BASEADDR || filename >= (char*)(VM_ARENA_BASEADDR + VM_ARENA_SIZE))
       return "@FAULT";
   uint32_t vpage = a2p(filename);
@@ -410,6 +463,13 @@ void* vm_map(const char *filename, unsigned int block){
 }
 
 void vm_discard(page_table_entry_t* pte){
+  /*
+   *  @brief clean up for the page table entry
+   *
+   *  @param pte: ptr to page table entry
+   *  
+   * */
+ 
   auto it = infile.find(pte);
   assert(it!=infile.end());
   //free the blocks used and write back
@@ -470,4 +530,5 @@ void vm_destroy(){
   all_pt.erase(curr_pid);
 
 }
+
 
