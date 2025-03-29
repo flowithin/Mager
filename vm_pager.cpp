@@ -303,6 +303,7 @@ int vm_fault(const void* addr, bool write_flag) {
     page_table_entry_t* pte = page_table_base_register + page;
     auto it = infile.find(pte);
     assert(it != infile.end());
+    // target page on disk
     if (it->second.infile) {
         // on disk
         // find a page
@@ -319,19 +320,25 @@ int vm_fault(const void* addr, bool write_flag) {
             psuff[epage].ref = psuff[epage].dirty = 0;
             return -1;
         }
-        // others lifted
+        // mark all associated entries as lifted
         auto& lifted = (it->second.ftype == file_t::SWAP) ? swfile[it->second.block]
                                                           : filemap[it->second.filename][it->second.block].vpset;
         for (auto l : lifted) {
             infile[l].infile = false;
             l->ppage = epage;
             l->read_enable = 1;
-            // core map insert
+            // update all ptes associated with the physical page
             core[epage].insert(l);
         }
-        if (it->second.ftype == file_t::FILE_B) filemap[it->second.filename][it->second.block].ppage = epage;
-    }   // if infile
+        // update the filemap for file-back pages
+        if (it->second.ftype == file_t::FILE_B) {
+            filemap[it->second.filename][it->second.block].ppage = epage;
+        }
+    }
+
+    // mark as read enable
     pte->read_enable = 1;
+    // if the page is not mapped to the pinned page
     auto it_psuff = psuff.find(pte->ppage);
     if (it_psuff != psuff.end()) {
         it_psuff->second.ref = 1;
@@ -343,11 +350,15 @@ int vm_fault(const void* addr, bool write_flag) {
             }
         }
     }   // except for pinned page
+
+    // grant write permission
     bool _is_cow = is_cow(pte);
     if (write_flag) {
         if (_is_cow) {
             // copy on write
-            if (cow(pte, static_cast<char*>(vm_physmem) + pte->ppage * VM_PAGESIZE) == -1) return -1;
+            if (cow(pte, static_cast<char*>(vm_physmem) + pte->ppage * VM_PAGESIZE) == -1) {
+                return -1;
+            }
         } else {
             assert(it_psuff != psuff.end());   // shouldn't be pinned page
             it_psuff->second.dirty = 1;
@@ -358,72 +369,83 @@ int vm_fault(const void* addr, bool write_flag) {
         }
     }
 
-
     return 0;
 }
 
-
+/*
+ *  @brief from usr's virtual address to the virtual page number it is in
+ *
+ *  @param addr: the virtual address
+ *
+ * */
 uint32_t a2p(const char* addr) {
-    /*
-     *  @brief from usr's virtual address to the virtual page number it is in
-     *
-     *  @param addr: the virtual address
-     *
-     * */
-
     return (reinterpret_cast<uintptr_t>(addr) - reinterpret_cast<uintptr_t>(VM_ARENA_BASEADDR)) >> 16;
 }
 
+/*
+ *  @brief from usr's virtual address to physical memory content
+ *
+ *  @param addr: usr's virtual address
+ *
+ * */
 char mem(const char* addr) {
-    /*
-     *  @brief from usr's virtual address to physical memory content
-     *
-     *  @param addr: usr's virtual address
-     *
-     * */
-
     return static_cast<char*>(vm_physmem)[page_table_base_register[a2p(addr)].ppage * VM_PAGESIZE
                                           + (reinterpret_cast<uintptr_t>(addr) & 0xFFFF)];
 }
 
+/*
+ *  @brief from virtual address to the c string it points to
+ *
+ *  @param filename: usr's virtual address
+ *
+ * */
 std::string vm_to_string(const char* filename) {
-    /*
-     *  @brief from virtual address to the c string it points to
-     *
-     *  @param filename: usr's virtual address
-     *
-     * */
-
+    // validate virtual address
     if (filename < static_cast<char*>(VM_ARENA_BASEADDR)
-        || filename >= (char*) (static_cast<char*>(VM_ARENA_BASEADDR) + VM_ARENA_SIZE))
+        || filename >= (char*) (static_cast<char*>(VM_ARENA_BASEADDR) + VM_ARENA_SIZE)) {
         return "@FAULT";
+    }
+    // get the initial virtual page number
     uint32_t vpage = a2p(filename);
-    /*uint32_t offset = reinterpret_cast<uintptr_t>(filename)& 0xFFFF;*/
     uint32_t i = 0;
+    // result string holder
     std::string rs;
-    // auto vaddr = static_cast<char*>(VM_ARENA_BASEADDR) + vpage * VM_PAGESIZE;
     while (1) {
-        // trigger fault if not in arena
         auto vaddr = static_cast<char*>(VM_ARENA_BASEADDR) + vpage * VM_PAGESIZE;
-        if (page_table_base_register[vpage].read_enable == 0 && vm_fault(vaddr, 0) == -1) return "@FAULT";
-        if (mem(filename + i) == '\0') break;
-        // the string we want to read
+        if (page_table_base_register[vpage].read_enable == 0 && vm_fault(vaddr, 0) == -1) {
+            return "@FAULT";
+        }
+        // break if reach end
+        if (mem(filename + i) == '\0') {
+            break;
+        }
+        // get the string char by char
         rs += mem(filename + i++);
         vpage = a2p(filename + i);
     }
+
     return rs;
 }
 
 void* vm_map(const char* filename, unsigned int block) {
+    // check full arena or full swap space
     if ((filename == nullptr && free_block.empty()) || bound == VM_ARENA_SIZE / VM_PAGESIZE) {
         return nullptr;
     }
+
+    // get the next page table entry
     page_table_entry_t* new_entry = page_table_base_register + all_pt[curr_pid].size;
+
     // file-backed
     if (filename != nullptr) {
+        // get the filename from virtual space
         std::string file_str = vm_to_string(filename);
-        if (file_str == "@FAULT") return nullptr;
+        if (file_str == "@FAULT") {
+            return nullptr;
+        }
+
         auto it = filemap.find(file_str);
+        // if a file has already been mapped, update to match the rest
         if (it != filemap.end()) {
             // file matched
             auto _it = it->second.find(block);
@@ -457,8 +479,9 @@ void* vm_map(const char* filename, unsigned int block) {
             *new_entry = { .ppage = pinned, .read_enable = 0, .write_enable = 0 };
             infile[new_entry] = Infile { file_t::FILE_B, true, block, file_str };
         }
-    } else {
-        // swap-backed
+    }
+    // swap-back page
+    else {
         infile[new_entry] = { file_t::SWAP, false, free_block.front(), "@SWAP" };
         swfile[free_block.front()].insert(new_entry);
         free_block.pop();
@@ -467,6 +490,7 @@ void* vm_map(const char* filename, unsigned int block) {
         *new_entry = { .ppage = pinned, .read_enable = 1, .write_enable = 0 };
         core[pinned].insert(new_entry);
     }
+
     // update core
     bound = ++all_pt[curr_pid].size;
     return (char*) VM_ARENA_BASEADDR + (bound - 1) * VM_PAGESIZE;
