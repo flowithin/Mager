@@ -13,7 +13,7 @@ endif
 CC+=-g -Wall -fno-builtin -std=c++17
 
 # List of source files for your pager
-PAGER_SOURCES=pager_old_submit.cpp
+PAGER_SOURCES=vm_pager.cpp
 
 # Generate the names of the pager's object files
 PAGER_OBJS=${PAGER_SOURCES:.cpp=.o}

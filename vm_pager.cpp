@@ -443,14 +443,12 @@ void* vm_map(const char* filename, unsigned int block) {
         if (file_str == "@FAULT") {
             return nullptr;
         }
-
         auto it = filemap.find(file_str);
         // if a file has already been mapped, update to match the rest
-        if (it != filemap.end()) {
-            // file matched
-            auto _it = it->second.find(block);
-            if (_it != it->second.end()) {
-                // block matched
+        if (it != filemap.end() && it->second.find(block) != it->second.end() ) {
+      // file matched
+      // block matched
+              auto _it = it->second.find(block);
                 new_entry->ppage = _it->second.ppage;
                 if (ghost.find(_it->second.ppage) != ghost.end()) {
                     // it is a ghost page!
@@ -471,10 +469,7 @@ void* vm_map(const char* filename, unsigned int block) {
                 }
                 // filemap update
                 _it->second.vpset.insert(new_entry);
-            } else
-                goto notmatched;
         } else {
-        notmatched:
             filemap[file_str][block].vpset.insert(new_entry);
             *new_entry = { .ppage = pinned, .read_enable = 0, .write_enable = 0 };
             infile[new_entry] = Infile { file_t::FILE_B, true, block, file_str };
