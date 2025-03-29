@@ -254,6 +254,8 @@ int alloc() {
  * */
 int cow(page_table_entry_t* pte, char* content) {
     // allocate one ppage
+    assert(filemap.find(pte) != filemap.end());
+    assert(ghost.find(pte->ppage) != ghost.end());
     int ppage = alloc();
     if (ppage == -1) {
         return -1;
