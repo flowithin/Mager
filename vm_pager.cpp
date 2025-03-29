@@ -42,8 +42,6 @@ int runclock() {
         // un-reference the referenced pages
         if (psuff[clock_q.back()].ref) {
             psuff[clock_q.back()].ref = 0;
-            // TODO: if a page is marked as referenced, shouldn't this be an assert statement
-            // i.e. it has to be part of the core otherwise some other parts of the program isn't working as expected
             if (core.find(clock_q.back()) != core.end()) {
                 // mark all mapped virtual pages as r=0 & w=0
                 for (auto pte : core[clock_q.back()]) {
@@ -173,7 +171,6 @@ int pm_evict() {
     }
 
     // if the page is free or part of a running process
-    // TODO: what is core? what is infile?
     assert(core.find(ppage) != core.end());
     // randomly choose one to see if they are in file
     page_table_entry_t* pte = *core[ppage].begin();
