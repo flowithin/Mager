@@ -21,7 +21,7 @@ PAGER_OBJS=${PAGER_SOURCES:.cpp=.o}
 # All test cases
 TESTS=${patsubst %.cpp, %, $(wildcard test*.cpp)}
 
-all: pager $(TESTS)
+all: pager
 
 tests: $(TESTS)
 

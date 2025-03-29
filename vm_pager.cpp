@@ -445,31 +445,34 @@ void* vm_map(const char* filename, unsigned int block) {
         }
         auto it = filemap.find(file_str);
         // if a file has already been mapped, update to match the rest
-        if (it != filemap.end() && it->second.find(block) != it->second.end() ) {
-      // file matched
-      // block matched
-              auto _it = it->second.find(block);
-                new_entry->ppage = _it->second.ppage;
-                if (ghost.find(_it->second.ppage) != ghost.end()) {
-                    // it is a ghost page!
-                    ghost.erase(_it->second.ppage);
-                    // NOTE: not sure
-                    // to set ref
-                    new_entry->read_enable = psuff[_it->second.ppage].ref;
-                    new_entry->write_enable = psuff[_it->second.ppage].ref && psuff[_it->second.ppage].dirty;
-                } else {
-                    *new_entry = **_it->second.vpset.begin();
-                }
-                // ghost -> not infile
-                bool is_infile = (!_it->second.vpset.empty() && infile[*_it->second.vpset.begin()].infile);
-                infile[new_entry] = Infile { file_t::FILE_B, is_infile, block, file_str };
-                // update core only if in mem
-                if (!is_infile) {
-                    core[new_entry->ppage].insert(new_entry);
-                }
-                // filemap update
-                _it->second.vpset.insert(new_entry);
-        } else {
+        if (it != filemap.end() && it->second.find(block) != it->second.end()) {
+            // file matched && block matched
+            auto _it = it->second.find(block);
+            new_entry->ppage = _it->second.ppage;
+            // if ghost page
+            if (ghost.find(_it->second.ppage) != ghost.end()) {
+                ghost.erase(_it->second.ppage);
+                new_entry->read_enable = psuff[_it->second.ppage].ref;
+                new_entry->write_enable = psuff[_it->second.ppage].ref && psuff[_it->second.ppage].dirty;
+            }
+            // if not a ghost page
+            else {
+                *new_entry = **_it->second.vpset.begin();
+            }
+            // if is a ghost page -> not infile
+            bool is_infile = (!_it->second.vpset.empty() && infile[*_it->second.vpset.begin()].infile);
+            // update infile
+            infile[new_entry] = Infile { file_t::FILE_B, is_infile, block, file_str };
+            // update core only if in mem
+            if (!is_infile) {
+                core[new_entry->ppage].insert(new_entry);
+            }
+            // filemap update
+            _it->second.vpset.insert(new_entry);
+        }
+        // new file block used
+        else {
+            // update filemap
             filemap[file_str][block].vpset.insert(new_entry);
             *new_entry = { .ppage = pinned, .read_enable = 0, .write_enable = 0 };
             infile[new_entry] = Infile { file_t::FILE_B, true, block, file_str };
@@ -477,6 +480,7 @@ void* vm_map(const char* filename, unsigned int block) {
     }
     // swap-back page
     else {
+        // map a new page to the pinned page
         infile[new_entry] = { file_t::SWAP, false, free_block.front(), "@SWAP" };
         swfile[free_block.front()].insert(new_entry);
         free_block.pop();
@@ -491,18 +495,20 @@ void* vm_map(const char* filename, unsigned int block) {
     return (char*) VM_ARENA_BASEADDR + (bound - 1) * VM_PAGESIZE;
 }
 
+/*
+ *  @brief clean up for the page table entry
+ *
+ *  @param pte: ptr to page table entry
+ *
+ * */
 void vm_discard(page_table_entry_t* pte) {
-    /*
-     *  @brief clean up for the page table entry
-     *
-     *  @param pte: ptr to page table entry
-     *
-     * */
-
+    // find the target pte's file block info
     auto it = infile.find(pte);
     assert(it != infile.end());
+
     // free the blocks used and write back
     switch (it->second.ftype) {
+        // swap back
     case file_t::SWAP: {
         // the last one leaves free up the block
         if (swfile[it->second.block].size() == 1) {
@@ -514,34 +520,46 @@ void vm_discard(page_table_entry_t* pte) {
         }
         break;
     }
+        // file back
     case file_t::FILE_B: {
         // deeply clean filemap
         assert(filemap[it->second.filename][it->second.block].vpset.find(pte)
                != filemap[it->second.filename][it->second.block].vpset.end());
         // deeply remove pte
         filemap[it->second.filename][it->second.block].vpset.erase(pte);
+        // if on disk
         if (it->second.infile) {
             // remove all trace!
-            if (filemap[it->second.filename][it->second.block].vpset.empty())
+            if (filemap[it->second.filename][it->second.block].vpset.empty()) {
                 filemap[it->second.filename].erase(it->second.block);
-            if (filemap[it->second.filename].empty()) filemap.erase(it->second.filename);
+            }
+            if (filemap[it->second.filename].empty()) {
+                filemap.erase(it->second.filename);
+            }
         }
         break;
     }
     }
-    // in mem
+    // in physical mem
     if (!it->second.infile) {
-        if (it->second.ftype == file_t::FILE_B && core[pte->ppage].size() == 1)
+        // private file-back page
+        if (it->second.ftype == file_t::FILE_B && core[pte->ppage].size() == 1) {
             ghost[pte->ppage] = std::pair(it->second.filename, it->second.block);
+        }
+        // swap-back pages not mapped to pinned
         else if (core[pte->ppage].size() == 1 && pte->ppage != pinned) {
-            // give back the page
+            // give back the physical page
             free_ppage.push(pte->ppage);
             psuff[pte->ppage].ref = psuff[pte->ppage].dirty = 0;
         }
-        if (core[pte->ppage].size() > 1)
+        // shared file-back pages
+        if (core[pte->ppage].size() > 1) {
             core[pte->ppage].erase(pte);
-        else
+        }
+        // all pages except for shared file-back pages
+        else {
             core.erase(pte->ppage);
+        }
     }
     // update infile
     infile.erase(pte);
