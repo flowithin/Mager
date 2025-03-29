@@ -1,2 +1,3 @@
 test*.cpp
 vm_pager.cpp
+vm_pager_struct.h
