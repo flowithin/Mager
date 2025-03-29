@@ -20,14 +20,14 @@ static uint32_t pinned;                           // pinned page number(0)
 static std::queue<uint32_t> clock_q;              // all physical pages numbers except for the pinned page
 static std::queue<uint32_t> free_ppage;           // free physical page numbers
 static std::unordered_map<uint32_t, ppb> psuff;   // physical page bits
-static std::unordered_map<uint32_t, std::pair<std::string, uint32_t>> ghost;   // ppage -> (filename, block)
-static std::unordered_map<uint32_t, std::set<page_table_entry_t*>> core;       // ppage -> mapped virtual page pointers
+static std::unordered_map<uint32_t, std::pair<std::string, uint32_t>> ghost;   // pages created by deleted processes
+static std::unordered_map<uint32_t, std::set<page_table_entry_t*>> core;       // all running/alive physical pages
 
 // Virtual Page Information
-static std::unordered_map<page_table_entry_t*, Infile> infile;   // map vpage -> filename
+static std::unordered_map<page_table_entry_t*, Infile> infile;   // write back location record for page table entries
 
 // File-Back Page Info
-static std::unordered_map<std::string, std::map<uint32_t, fbp>> filemap;   // filename -> (block, p.t.e)
+static std::unordered_map<std::string, std::map<uint32_t, fbp>> filemap;   // all write-back files in use
 
 
 /*
@@ -148,17 +148,17 @@ int pm_evict() {
     // get a physical page to move things in
     int ppage = runclock();
 
-    // no one can be evicted
-    // TODO: this line seems useless or can be replaces with assert
-    if (ppage == -1) return -1;
-
     // if the page is a left over from a previously destroyed process
-    // TODO: what kind of pages are ghosted
     if (ghost.find(ppage) != ghost.end()) {
         // clean up the page
         if (psuff[ppage].dirty) {
             // write back dirty page
-            file_write(ghost[ppage].first.c_str(), ghost[ppage].second, (char*) vm_physmem + ppage * VM_PAGESIZE);
+            if (file_write(ghost[ppage].first.c_str(), ghost[ppage].second, (char*) vm_physmem + ppage * VM_PAGESIZE)
+                == -1) {
+                free_ppage.push(ppage);
+                psuff[ppage].ref = psuff[ppage].dirty = 0;
+                return -1;
+            }
             // mark as clean
             psuff[ppage].dirty = 0;
         }
@@ -194,7 +194,11 @@ int pm_evict() {
     if (psuff[ppage].dirty) {
         // write back if dirty
         void* eaddr = (char*) (vm_physmem) + ppage * VM_PAGESIZE;
-        file_write(filename, block, eaddr);
+        if (file_write(filename, block, eaddr) == -1) {
+            free_ppage.push(ppage);
+            psuff[ppage].ref = psuff[ppage].dirty = 0;
+            return -1;
+        }
         // clear the dirty bit
         psuff[ppage].dirty = 0;
     }
@@ -245,49 +249,69 @@ int alloc() {
     }
     return ppage;
 }
+
+/*
+ *  @brief copy on write operation
+ *  @param pte: ptr to page table entry interested in
+ *  @param content: the content in its old page
+ * */
 int cow(page_table_entry_t* pte, char* content) {
-    /*
-     *  @brief copy on write operation
-     *  @param pte: ptr to page table entry interested in
-     *  @param content: the content in its old page
-     * */
-    // copy on write
-    // allocate one ppage for it
+    // allocate one ppage
     int ppage = alloc();
-    if (ppage == -1) return -1;
-    // write the read value to the new loc
+    if (ppage == -1) {
+        return -1;
+    }
+    // copy the page to a new physical page
     std::memcpy(static_cast<char*>(vm_physmem) + ppage * VM_PAGESIZE, content, VM_PAGESIZE);
+
     // update core
     core[pte->ppage].erase(pte);
-    if (core[pte->ppage].empty()) core.erase(pte->ppage);
+    if (core[pte->ppage].empty()) {
+        core.erase(pte->ppage);
+    }
     pte->ppage = ppage;
     core[pte->ppage].insert(pte);
+
     // update ref and dirty and write read
-    // dirty bit = 1
     psuff[pte->ppage].dirty = 1;
     pte->read_enable = pte->write_enable = 1;
     return 0;
 }
 
+/*
+ *  @brief check if a page table entry needs copy on write
+ *  @param pte: ptr to page table entry interested in
+ *
+ * */
 bool is_cow(page_table_entry_t* pte) {
     // pte should exist in core and also in mem
     return (core.find(pte->ppage) != core.end() && core[pte->ppage].size() > 1 && infile[pte].ftype == file_t::SWAP
             && !infile[pte].infile)
         || pte->ppage == pinned;
 }
+
 int vm_fault(const void* addr, bool write_flag) {
+    // find the virtual page corresponding to the address
     uint64_t page = (reinterpret_cast<uint64_t>(addr) - reinterpret_cast<uint64_t>(VM_ARENA_BASEADDR)) >> 16;
+
+    // check if virtual page is valid
     if (page >= bound || reinterpret_cast<uint64_t>(addr) < reinterpret_cast<uint64_t>(VM_ARENA_BASEADDR)) {
         return -1;
     }
+
+    // get the corresponding page table entry
     page_table_entry_t* pte = page_table_base_register + page;
     auto it = infile.find(pte);
     assert(it != infile.end());
     if (it->second.infile) {
-        // in file, bring back
+        // on disk
+        // find a page
         int epage = alloc();
         if (epage == -1) return -1;
+
+        // physical page address
         void* eaddr = static_cast<char*>(vm_physmem) + epage * VM_PAGESIZE;
+
         if (file_read(it->second.ftype == file_t::FILE_B ? it->second.filename.c_str() : nullptr, it->second.block,
                       eaddr)
             == -1) {
@@ -349,6 +373,7 @@ uint32_t a2p(const char* addr) {
 
     return (reinterpret_cast<uintptr_t>(addr) - reinterpret_cast<uintptr_t>(VM_ARENA_BASEADDR)) >> 16;
 }
+
 char mem(const char* addr) {
     /*
      *  @brief from usr's virtual address to physical memory content
@@ -360,6 +385,7 @@ char mem(const char* addr) {
     return static_cast<char*>(vm_physmem)[page_table_base_register[a2p(addr)].ppage * VM_PAGESIZE
                                           + (reinterpret_cast<uintptr_t>(addr) & 0xFFFF)];
 }
+
 std::string vm_to_string(const char* filename) {
     /*
      *  @brief from virtual address to the c string it points to
@@ -387,6 +413,7 @@ std::string vm_to_string(const char* filename) {
     }
     return rs;
 }
+
 void* vm_map(const char* filename, unsigned int block) {
     if ((filename == nullptr && free_block.empty()) || bound == VM_ARENA_SIZE / VM_PAGESIZE) {
         return nullptr;

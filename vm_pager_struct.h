@@ -37,9 +37,9 @@ struct ppb {
 
 // Page Table Info
 struct Pt {
-    uint32_t size;                              // TODO
-    uint32_t numsw;                             // TODO
-    std::unique_ptr<page_table_entry_t[]> st;   // TODO
+    uint32_t size;                              // number of valid vps
+    uint32_t numsw;                             // number of swap blocks in use
+    std::unique_ptr<page_table_entry_t[]> st;   // page table starting address
 };
 
 // File Block Info
