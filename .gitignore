@@ -3,7 +3,4 @@
 !*.cpp
 !.gitignore
 !Makefile
-!*.h
-!autotag.sh
-!CMakeLists.txt
-!SUBMIT
+!*/
